@@ -437,8 +437,11 @@ def assertok(res, *args):
 # Main code starts here
 
 # Authenticate (only simple supported)
-res = imap.login(imapuser, imappasswd)
-assertok(res, "login", imapuser, 'xxxxxxxx')
+def login():
+    res = imap.login(imapuser, imappasswd)
+    assertok(res, "login", imapuser, 'xxxxxxxx')
+
+login()
 
 # List imap directories
 if opts["--imaplist"] is True:
