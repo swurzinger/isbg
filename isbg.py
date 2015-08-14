@@ -91,6 +91,7 @@ maxsize = 120000  # messages larger than this aren't considered
 pastuidsfile = None
 lockfilegrace = 240
 alreadylearnt = "Message was already un/learned"
+uids = []
 
 # satest is the command that is used to test if the message is spam
 satest = ["spamassassin", "--exit-code"]
@@ -527,7 +528,6 @@ def sa_learn_ham():
 
 sa_learn_ham()
 
-uids = []
 
 if opts["--teachonly"] is False:
     # check spaminbox exists by examining it
