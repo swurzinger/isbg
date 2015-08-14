@@ -528,20 +528,20 @@ def sa_learn_ham():
 
 sa_learn_ham()
 
-
-if opts["--teachonly"] is False:
-    # check spaminbox exists by examining it
-    res = imap.select(spaminbox, 1)
-    assertok(res, 'select', spaminbox, 1)
-
-    # select inbox
-    res = imap.select(imapinbox, 1)
-    assertok(res, 'select', imapinbox, 1)
-
-    # get the uids of all mails with a size less then the maxsize
-    typ, inboxuids = imap.uid("SEARCH", None, "SMALLER", maxsize)
-    inboxuids = inboxuids[0].split()
-
+def filer_uids():
+    if opts["--teachonly"] is False:
+        # check spaminbox exists by examining it
+        res = imap.select(spaminbox, 1)
+        assertok(res, 'select', spaminbox, 1)
+    
+        # select inbox
+        res = imap.select(imapinbox, 1)
+        assertok(res, 'select', imapinbox, 1)
+    
+        # get the uids of all mails with a size less then the maxsize
+        typ, inboxuids = imap.uid("SEARCH", None, "SMALLER", maxsize)
+        inboxuids = inboxuids[0].split()
+    
     # pastuids keeps track of which uids we have already seen, so
     # that we don't analyze them multiple times. We store its
     # contents between sessions by saving into a file as Python
@@ -554,13 +554,15 @@ if opts["--teachonly"] is False:
         pass
     # remember what pastuids looked like so that we can compare at the end
     origpastuids = pastuids[:]
-
+    
     # filter away uids that was previously scanned
     uids = [u for u in inboxuids if u not in pastuids]
-
+    
     # Take only X elements if partialrun is enabled
     if partialrun is not None:
         uids = uids[:int(partialrun)]
+
+filter_uids()
 
 # Keep track of new spam uids
 spamlist = []
