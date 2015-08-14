@@ -257,6 +257,8 @@ def argument_processing():
         if partialrun < 1:
             errorexit("Partial run number must be equal to 1 or higher")
 
+argument_processing():
+
 # fixup any arguments
 
 if spamflags[-1] != ')':
@@ -300,13 +302,17 @@ def setpw(pw, hash):
         res[i] = chr(ord(res[i]) ^ ord(pw[i]))
     return string.join(res, '')
 
-if passwdfilename is None:
-    m = md5()
-    m.update(imaphost)
-    m.update(imapuser)
-    m.update(repr(imapport))
-    passwdfilename = os.path.expanduser("~" + os.sep +
-                                        ".isbg-" + hexof(m.digest()))
+
+def create_passwdfile():
+   if passwdfilename is None:
+       m = md5()
+       m.update(imaphost)
+       m.update(imapuser)
+       m.update(repr(imapport))
+       passwdfilename = os.path.expanduser("~" + os.sep +
+                                           ".isbg-" + hexof(m.digest()))
+
+create_passwdfile():
 
 if passwordhash is None:
     # We make hash that the password is xor'ed against
@@ -322,11 +328,15 @@ if passwordhash is None:
         m.update(passwordhash)
         passwordhash = passwordhash + m.digest()
 
-if opts["--verbose"] is True:
-    print("Lock file is", lockfilename)
-    print("Trackfile is", pastuidsfile)
-    print("SpamFlags are", spamflags)
-    print("Password file is", passwdfilename)
+
+def print_file_infos():
+    if opts["--verbose"] is True:
+        print("Lock file is", lockfilename)
+        print("Trackfile is", pastuidsfile)
+        print("SpamFlags are", spamflags)
+        print("Password file is", passwdfilename)
+
+print_file_infos()
 
 # Acquire lockfilename or exit
 if opts["--ignorelockfile"] is True:
