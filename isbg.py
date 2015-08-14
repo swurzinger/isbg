@@ -444,10 +444,11 @@ def login():
 login()
 
 # List imap directories
-if opts["--imaplist"] is True:
-    imap_list = str(imap.list())
-    imap_list = re.sub('\(.*?\)| \".\" \"|\"\', \''," ",imap_list) # string formatting
-    print(imap_list)
+def imap_list():
+    if opts["--imaplist"] is True:
+        imap_list = str(imap.list())
+        imap_list = re.sub('\(.*?\)| \".\" \"|\"\', \''," ",imap_list) # string formatting
+        print(imap_list)
 
 # Spamassassin training
 if opts["--learnspambox"] is not None:
