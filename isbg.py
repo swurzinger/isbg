@@ -690,14 +690,16 @@ def logout():
 
 logout()
 
-if opts["--nostats"] is False:
-    if opts["--learnspambox"] is not None:
-        print("%d/%d spams learnt") % (s_learnt, s_tolearn)
-    if opts["--learnhambox"] is not None:
-        print("%d/%d hams learnt") % (h_learnt, h_tolearn)
-    if opts["--teachonly"] is False:
-        print("%d spams found in %d messages") % (numspam, nummsg)
-        print("%d/%d was automatically deleted") % (spamdeleted, numspam)
+
+def print_stats():
+    if opts["--nostats"] is False:
+        if opts["--learnspambox"] is not None:
+            print("%d/%d spams learnt") % (s_learnt, s_tolearn)
+        if opts["--learnhambox"] is not None:
+            print("%d/%d hams learnt") % (h_learnt, h_tolearn)
+        if opts["--teachonly"] is False:
+            print("%d spams found in %d messages") % (numspam, nummsg)
+            print("%d/%d was automatically deleted") % (spamdeleted, numspam)
 
 if opts["--exitcodes"] is True and nummsg:
     res = 0
