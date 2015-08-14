@@ -204,6 +204,11 @@ def argument_processing():
     else:
         imapport = int(opts["--imapport"])
 
+    if opts["--nossl"] is True:
+        imap = imaplib.IMAP4(imaphost, imapport)
+    else:
+        imap = imaplib.IMAP4_SSL(imaphost, imapport)
+
     if opts["--imapuser"] is not None:
         imapuser = opts["--imapuser"]
     
@@ -235,7 +240,7 @@ def argument_processing():
     
     if opts["--noreport"] is True:
         noreport = True
-    
+ 
     if opts["--spamc"] is True:
         spamc = True
         satest = ["spamc", "-c"]
@@ -430,11 +435,6 @@ def assertok(res, *args):
                   % (repr(args), res), exitcodeimap)
 
 # Main code starts here
-
-if opts["--nossl"] is True:
-    imap = imaplib.IMAP4(imaphost, imapport)
-else:
-    imap = imaplib.IMAP4_SSL(imaphost, imapport)
 
 # Authenticate (only simple supported)
 res = imap.login(imapuser, imappasswd)
