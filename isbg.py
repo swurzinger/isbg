@@ -631,9 +631,12 @@ def check_if_spam():
 
 check_if_spam()
 
-nummsg = len(uids)
-spamdeleted = len(spamdeletelist)
-numspam = len(spamlist) + spamdeleted
+
+def spam_stats():
+    nummsg = len(uids)
+    spamdeleted = len(spamdeletelist)
+    numspam = len(spamlist) + spamdeleted
+
 
 # If we found any spams, now go and mark the original messages
 if numspam or spamdeleted:
