@@ -339,20 +339,23 @@ def print_file_infos():
 print_file_infos()
 
 # Acquire lockfilename or exit
-if opts["--ignorelockfile"] is True:
-    if opts["--verbose"] is True:
-        print("Lock file is ignored. Continue.")
-else:
-    if os.path.exists(lockfilename) and (os.path.getmtime(lockfilename) +
-                                         (lockfilegrace * 60) > time.time()):
+def lockfile():
+    if opts["--ignorelockfile"] is True:
         if opts["--verbose"] is True:
-            print("""\nLock file is present. Guessing isbg
-                  is already running. Exit.""")
-        exit(exitcodelocked)
+            print("Lock file is ignored. Continue.")
     else:
-        lockfile = open(lockfilename, 'w')
-        lockfile.write(repr(os.getpid()))
-        lockfile.close()
+        if os.path.exists(lockfilename) and (os.path.getmtime(lockfilename) +
+                                             (lockfilegrace * 60) > time.time()):
+            if opts["--verbose"] is True:
+                print("""\nLock file is present. Guessing isbg
+                      is already running. Exit.""")
+            exit(exitcodelocked)
+        else:
+            lockfile = open(lockfilename, 'w')
+            lockfile.write(repr(os.getpid()))
+            lockfile.close()
+
+lockfile()
 
 # Figure out the password
 if imappasswd is None:
