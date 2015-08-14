@@ -450,41 +450,46 @@ def imap_list():
         imap_list = re.sub('\(.*?\)| \".\" \"|\"\', \''," ",imap_list) # string formatting
         print(imap_list)
 
+imap_list()
+
 # Spamassassin training
-if opts["--learnspambox"] is not None:
-    if opts["--verbose"] is True:
-        print("Teach SPAM to SA from:", learnspambox)
-    res = imap.select(learnspambox, 0)
-    assertok(res, 'select', learnspambox)
-    s_tolearn = int(res[1][0])
-    s_learnt = 0
-    typ, uids = imap.uid("SEARCH", None, "ALL")
-    uids = uids[0].split()
-    for u in uids:
-        body = getmessage(u)
-        p = Popen(["spamc", "--learntype=spam"],
-                  stdin=PIPE, stdout=PIPE, close_fds=True)
-        try:
-            out = p.communicate(body)[0]
-        except:
-            continue
-        code = p.returncode
-        if code == 69 or code == 74:
-            errorexit("spamd is misconfigured (use --allow-tell)")
-        p.stdin.close()
-        if not out.strip() == alreadylearnt:
-            s_learnt += 1
+def sa_learn_spam():
+    if opts["--learnspambox"] is not None:
         if opts["--verbose"] is True:
-            print(u, out)
-        if opts["--learnthendestroy"] is True:
-            if opts["--gmail"] is True:
-                res = imap.uid("COPY", u, "[Gmail]/Trash")
-                assertok(res, "uid copy", u, "[Gmail]/Trash")
-            else:
-                res = imap.uid("STORE", u, spamflagscmd, "(\\Deleted)")
-                assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
-    if opts["--expunge"] is True:
-        imap.expunge()
+            print("Teach SPAM to SA from:", learnspambox)
+        res = imap.select(learnspambox, 0)
+        assertok(res, 'select', learnspambox)
+        s_tolearn = int(res[1][0])
+        s_learnt = 0
+        typ, uids = imap.uid("SEARCH", None, "ALL")
+        uids = uids[0].split()
+        for u in uids:
+            body = getmessage(u)
+            p = Popen(["spamc", "--learntype=spam"],
+                      stdin=PIPE, stdout=PIPE, close_fds=True)
+            try:
+                out = p.communicate(body)[0]
+            except:
+                continue
+            code = p.returncode
+            if code == 69 or code == 74:
+                errorexit("spamd is misconfigured (use --allow-tell)")
+            p.stdin.close()
+            if not out.strip() == alreadylearnt:
+                s_learnt += 1
+            if opts["--verbose"] is True:
+                print(u, out)
+            if opts["--learnthendestroy"] is True:
+                if opts["--gmail"] is True:
+                    res = imap.uid("COPY", u, "[Gmail]/Trash")
+                    assertok(res, "uid copy", u, "[Gmail]/Trash")
+                else:
+                    res = imap.uid("STORE", u, spamflagscmd, "(\\Deleted)")
+                    assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
+        if opts["--expunge"] is True:
+            imap.expunge()
+
+sa_learn_spam()
 
 if opts["--learnhambox"] is not None:
     if opts["--verbose"] is True:
