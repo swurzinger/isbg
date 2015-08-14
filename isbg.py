@@ -92,6 +92,8 @@ pastuidsfile = None
 lockfilegrace = 240
 alreadylearnt = "Message was already un/learned"
 uids = []
+spamlist = []
+spamdeletelist = []
 
 # satest is the command that is used to test if the message is spam
 satest = ["spamassassin", "--exit-code"]
@@ -528,7 +530,7 @@ def sa_learn_ham():
 
 sa_learn_ham()
 
-def filer_uids():
+def filter_uids():
     if opts["--teachonly"] is False:
         # check spaminbox exists by examining it
         res = imap.select(spaminbox, 1)
@@ -564,11 +566,6 @@ def filer_uids():
 
 filter_uids()
 
-# Keep track of new spam uids
-spamlist = []
-
-# Keep track of spam that is to be deleted
-spamdeletelist = []
 
 # Main loop that iterates over each new uid we haven't seen before
 for u in uids:
