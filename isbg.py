@@ -74,7 +74,6 @@ import os
 import getpass
 import string
 import time
-import atexit
 
 try:
     from hashlib import md5
@@ -278,8 +277,6 @@ if pastuidsfile is None:
 # Delete lock file
 def removelock():
     os.remove(lockfilename)
-
-atexit.register(removelock)
 
 
 # Password stuff
@@ -674,4 +671,5 @@ if opts["--exitcodes"] is True and nummsg:
         sys.exit(exitcodenewspam)
     sys.exit(exitcodenewmsgspam)
 
+removelock()
 sys.exit(exitcodeok)
