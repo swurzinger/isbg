@@ -408,12 +408,12 @@ def getmessage(uid, append_to=None):
         body = res[1][0][1]
     return body
 
-# This function makes sure that each lines ends in <CR><LF>
-# SpamAssassin strips out the <CR> normally
-crnlre = re.compile("([^\r])\n", re.DOTALL)
-
 
 def crnlify(text):
+    # This function makes sure that each lines ends in <CR><LF>
+    # SpamAssassin strips out the <CR> normally
+    crnlre = re.compile("([^\r])\n", re.DOTALL)
+
     # we have to do it twice to work right since the re includes
     # the char preceding \n
     return re.sub(crnlre, "\\1\r\n", re.sub(crnlre, "\\1\r\n", text))
