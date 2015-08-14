@@ -684,9 +684,11 @@ def mark_as_spam():
 mark_as_spam()
 
 # sign off
-imap.logout()
-del imap
+def logout():
+    imap.logout()
+    del imap
 
+logout()
 
 if opts["--nostats"] is False:
     if opts["--learnspambox"] is not None:
