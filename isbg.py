@@ -168,98 +168,101 @@ def dehexof(x):
 
 
 # Argument processing
-try:
-    opts = docopt(__doc__, version="isbg version 0.99")
-except Exception, e:
-    errorexit("Option processing failed - " + str(e))
-
-if opts["--delete"] is True:
-    if opts["--gmail"] is True:
-        pass
+def argument_processing():
+    try:
+        opts = docopt(__doc__, version="isbg version 0.99")
+    except Exception, e:
+        errorexit("Option processing failed - " + str(e))
+    
+    if opts["--delete"] is True:
+        if opts["--gmail"] is True:
+            pass
+        else:
+            addspamflag("\\Deleted")
+    
+    if opts["--deletehigherthan"] is not None:
+        try:
+            deletehigherthan = float(opts["--deletehigherthan"])
+        except:
+            errorexit("Unrecognized score - " + opts["--deletehigherthan"])
+        if deletehigherthan < 1:
+            errorexit("Score " + repr(deletehigherthan) + " is too small")
+    
+    if opts["--flag"] is True:
+        addspamflag("\\Flagged")
+    
+    if opts["--imaphost"] is not None:
+        imaphost = opts["--imaphost"]
+    
+    if opts["--imappasswd"] is not None:
+        imappasswd = opts["--imappasswd"]
+    
+    if opts["--imapport"] is None:
+        if opts["--nossl"] is True:
+            imapport = 143
+        else:
+            imapport = 993
     else:
-        addspamflag("\\Deleted")
+        imapport = int(opts["--imapport"])
 
-if opts["--deletehigherthan"] is not None:
-    try:
-        deletehigherthan = float(opts["--deletehigherthan"])
-    except:
-        errorexit("Unrecognized score - " + opts["--deletehigherthan"])
-    if deletehigherthan < 1:
-        errorexit("Score " + repr(deletehigherthan) + " is too small")
-
-if opts["--flag"] is True:
-    addspamflag("\\Flagged")
-
-if opts["--imaphost"] is not None:
-    imaphost = opts["--imaphost"]
-
-if opts["--imappasswd"] is not None:
-    imappasswd = opts["--imappasswd"]
-
-if opts["--imapport"] is not None:
-    imapport = int(opts["--imapport"])
-
-if opts["--imapuser"] is not None:
-    imapuser = opts["--imapuser"]
-
-if opts["--imapinbox"] is not None:
-    imapinbox = opts["--imapinbox"]
-
-if opts["--learnspambox"] is not None:
-    learnspambox = opts["--learnspambox"]
-
-if opts["--learnhambox"] is not None:
-    learnhambox = opts["--learnhambox"]
-
-if opts["--lockfilegrace"] is not None:
-    lockfilegrace = int(opts["--lockfilegrace"])
-
-if opts["--maxsize"] is not None:
-    try:
-        maxsize = int(opts["--maxsize"])
-    except:
-        errorexit("Unrecognised size - " + opts["--maxsize"])
-    if maxsize < 1:
-        errorexit("Size " + repr(maxsize) + " is too small")
-
-if opts["--movehamto"] is not None:
-    movehamto = opts["--movehamto"]
-
-if opts["--noninteractive"] is True:
-    interactive = 0
-
-if opts["--noreport"] is True:
-    noreport = True
-
-if opts["--spamc"] is True:
-    spamc = True
-    satest = ["spamc", "-c"]
-    sasave = ["spamc"]
-
-if opts["--spaminbox"] is not None:
-    spaminbox = opts["--spaminbox"]
-
-if opts["--lockfilename"] is not None:
-    lockfilename = opts["--lockfilename"]
-
-if opts["--trackfile"] is not None:
-    pastuidsfile = opts["--trackfile"]
-
-if opts["--partialrun"] is not None:
-    partialrun = opts["--partialrun"]
-    if partialrun < 1:
-        errorexit("Partial run number must be equal to 1 or higher")
+    if opts["--imapuser"] is not None:
+        imapuser = opts["--imapuser"]
+    
+    if opts["--imapinbox"] is not None:
+        imapinbox = opts["--imapinbox"]
+    
+    if opts["--learnspambox"] is not None:
+        learnspambox = opts["--learnspambox"]
+    
+    if opts["--learnhambox"] is not None:
+        learnhambox = opts["--learnhambox"]
+    
+    if opts["--lockfilegrace"] is not None:
+        lockfilegrace = int(opts["--lockfilegrace"])
+    
+    if opts["--maxsize"] is not None:
+        try:
+            maxsize = int(opts["--maxsize"])
+        except:
+            errorexit("Unrecognised size - " + opts["--maxsize"])
+        if maxsize < 1:
+            errorexit("Size " + repr(maxsize) + " is too small")
+    
+    if opts["--movehamto"] is not None:
+        movehamto = opts["--movehamto"]
+    
+    if opts["--noninteractive"] is True:
+        interactive = 0
+    
+    if opts["--noreport"] is True:
+        noreport = True
+    
+    if opts["--spamc"] is True:
+        spamc = True
+        satest = ["spamc", "-c"]
+        sasave = ["spamc"]
+    
+    if opts["--spaminbox"] is not None:
+        spaminbox = opts["--spaminbox"]
+    
+    if opts["--lockfilename"] is None:
+        lockfilename = os.path.expanduser("~" + os.sep + ".isbg-lock")
+    else:
+        lockfilename = opts["--lockfilename"]
+    
+    if opts["--trackfile"] is not None:
+        pastuidsfile = opts["--trackfile"]
+    
+    if opts["--partialrun"] is not None:
+        partialrun = opts["--partialrun"]
+        if partialrun < 1:
+            errorexit("Partial run number must be equal to 1 or higher")
 
 # fixup any arguments
 
 if spamflags[-1] != ')':
     spamflags = spamflags + ')'
 
-if opts["--imapport"] is None:
-    if opts["--nossl"] is True:
-        imapport = 143
-    else:
-        imapport = 993
 
 if pastuidsfile is None:
     pastuidsfile = os.path.expanduser("~" + os.sep + ".isbg-track")
@@ -270,8 +273,6 @@ if pastuidsfile is None:
     res = hexof(m.digest())
     pastuidsfile = pastuidsfile + res
 
-if opts["--lockfilename"] is None:
-    lockfilename = os.path.expanduser("~" + os.sep + ".isbg-lock")
 
 
 # Delete lock file
