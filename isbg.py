@@ -358,34 +358,36 @@ def lockfile():
 lockfile()
 
 # Figure out the password
-if imappasswd is None:
-    if opts["--savepw"] is False and os.path.exists(passwdfilename) is True:
-        try:
-            imappasswd = getpw(dehexof(open(passwdfilename, "rb").read()),
-                               passwordhash)
-            if opts["--verbose"] is True:
-                print("Successfully read password file")
-        except:
-            pass
-
-    # do we have to prompt?
+def password():
     if imappasswd is None:
-        if not interactive:
-            errorexit("""You need to specify your imap password and save it
-                      with the --savepw switch""", exitcodeok)
-        imappasswd = getpass.getpass("IMAP password for %s@%s: "
-                                     % (imapuser, imaphost))
+        if opts["--savepw"] is False and os.path.exists(passwdfilename) is True:
+            try:
+                imappasswd = getpw(dehexof(open(passwdfilename, "rb").read()),
+                                   passwordhash)
+                if opts["--verbose"] is True:
+                    print("Successfully read password file")
+            except:
+                pass
+    
+        # do we have to prompt?
+        if imappasswd is None:
+            if not interactive:
+                errorexit("""You need to specify your imap password and save it
+                          with the --savepw switch""", exitcodeok)
+            imappasswd = getpass.getpass("IMAP password for %s@%s: "
+                                         % (imapuser, imaphost))
+    
+        # Should we save it?
+        if opts["--savepw"] is True:
+            f = open(passwdfilename, "wb+")
+            try:
+                os.chmod(passwdfilename, 0600)
+            except:
+                pass
+            f.write(hexof(setpw(imappasswd, passwordhash)))
+            f.close()
 
-    # Should we save it?
-    if opts["--savepw"] is True:
-        f = open(passwdfilename, "wb+")
-        try:
-            os.chmod(passwdfilename, 0600)
-        except:
-            pass
-        f.write(hexof(setpw(imappasswd, passwordhash)))
-        f.close()
-
+password()
 
 # Retrieve the entire message
 def getmessage(uid, append_to=None):
