@@ -568,66 +568,68 @@ filter_uids()
 
 
 # Main loop that iterates over each new uid we haven't seen before
-for u in uids:
-    # Retrieve the entire message
-    body = getmessage(u, pastuids)
+def check_if_spam():
+   for u in uids:
+       # Retrieve the entire message
+       body = getmessage(u, pastuids)
+   
+       # Feed it to SpamAssassin in test mode
+       p = Popen(satest, stdin=PIPE, stdout=PIPE, close_fds=True)
+       try:
+           score = p.communicate(body)[0]
+           if opts["--spamc"] is False:
+               m = re.search("score=(-?\d+(?:\.\d+)?) required=(\d+(?:\.\d+)?)",
+                             score)
+               score = m.group(1) + "/" + m.group(2) + "\n"
+       except:
+           continue
+       if score == "0/0\n":
+           errorexit("spamc -> spamd error - aborting", exitcodespamc)
+   
+       if opts["--verbose"] is True:
+           print(u, "score:", score)
+   
+       code = p.returncode
+       if code == 0:
+           # Message is below threshold
+           pastuids.append(u)
+       else:
+           # Message is spam
+           if opts["--verbose"] is True:
+               print(u, "is spam")
+   
+           if (opts["--deletehigherthan"] is not None and
+               float(score.split('/')[0]) > deletehigherthan):
+               spamdeletelist.append(u)
+               continue
+   
+           # do we want to include the spam report
+           if noreport is False:
+               # filter it through sa
+               p = Popen(sasave, stdin=PIPE, stdout=PIPE, close_fds=True)
+               try:
+                   body = p.communicate(body)[0]
+               except:
+                   continue
+               p.stdin.close()
+               body = crnlify(body)
+               res = imap.append(spaminbox, None, None, body)
+               # The above will fail on some IMAP servers for various reasons.
+               # we print out what happened and continue processing
+               if res[0] != 'OK':
+                   print(repr(["append", spaminbox, "{body}"]),
+                         "failed for uid" + repr(u) + ": " + repr(res) +
+                         ". Leaving original message alone.")
+                   pastuids.append(u)
+                   continue
+           else:
+               # just copy it as is
+               res = imap.uid("COPY", u, spaminbox)
+               assertok(res, "uid copy", u, spaminbox)
+   
+           spamlist.append(u)
 
-    # Feed it to SpamAssassin in test mode
-    p = Popen(satest, stdin=PIPE, stdout=PIPE, close_fds=True)
-    try:
-        score = p.communicate(body)[0]
-        if opts["--spamc"] is False:
-            m = re.search("score=(-?\d+(?:\.\d+)?) required=(\d+(?:\.\d+)?)",
-                          score)
-            score = m.group(1) + "/" + m.group(2) + "\n"
-    except:
-        continue
-    if score == "0/0\n":
-        errorexit("spamc -> spamd error - aborting", exitcodespamc)
-
-    if opts["--verbose"] is True:
-        print(u, "score:", score)
-
-    code = p.returncode
-    if code == 0:
-        # Message is below threshold
-        pastuids.append(u)
-    else:
-        # Message is spam
-        if opts["--verbose"] is True:
-            print(u, "is spam")
-
-        if (opts["--deletehigherthan"] is not None and
-            float(score.split('/')[0]) > deletehigherthan):
-            spamdeletelist.append(u)
-            continue
-
-        # do we want to include the spam report
-        if noreport is False:
-            # filter it through sa
-            p = Popen(sasave, stdin=PIPE, stdout=PIPE, close_fds=True)
-            try:
-                body = p.communicate(body)[0]
-            except:
-                continue
-            p.stdin.close()
-            body = crnlify(body)
-            res = imap.append(spaminbox, None, None, body)
-            # The above will fail on some IMAP servers for various reasons.
-            # we print out what happened and continue processing
-            if res[0] != 'OK':
-                print(repr(["append", spaminbox, "{body}"]),
-                      "failed for uid" + repr(u) + ": " + repr(res) +
-                      ". Leaving original message alone.")
-                pastuids.append(u)
-                continue
-        else:
-            # just copy it as is
-            res = imap.uid("COPY", u, spaminbox)
-            assertok(res, "uid copy", u, spaminbox)
-
-        spamlist.append(u)
-
+check_if_spam()
 
 nummsg = len(uids)
 spamdeleted = len(spamdeletelist)
