@@ -701,13 +701,17 @@ def print_stats():
             print("%d spams found in %d messages") % (numspam, nummsg)
             print("%d/%d was automatically deleted") % (spamdeleted, numspam)
 
-if opts["--exitcodes"] is True and nummsg:
-    res = 0
-    if numspam == 0:
-        sys.exit(exitcodenewmsgs)
-    if numspam == nummsg:
-        sys.exit(exitcodenewspam)
-    sys.exit(exitcodenewmsgspam)
+
+def exitcodes():
+    if opts["--exitcodes"] is True and nummsg:
+        res = 0
+        if numspam == 0:
+            sys.exit(exitcodenewmsgs)
+        if numspam == nummsg:
+            sys.exit(exitcodenewspam)
+        sys.exit(exitcodenewmsgspam)
+
+exitcodes()
 
 removelock()
 sys.exit(exitcodeok)
