@@ -491,38 +491,41 @@ def sa_learn_spam():
 
 sa_learn_spam()
 
-if opts["--learnhambox"] is not None:
-    if opts["--verbose"] is True:
-        print("Teach HAM to SA from:", learnhambox)
-    res = imap.select(learnhambox, 0)
-    assertok(res, 'select', learnhambox)
-    h_tolearn = int(res[1][0])
-    h_learnt = 0
-    typ, uids = imap.uid("SEARCH", None, "ALL")
-    uids = uids[0].split()
-    for u in uids:
-        body = getmessage(u)
-        p = Popen(["spamc", "--learntype=ham"],
-                  stdin=PIPE, stdout=PIPE, close_fds=True)
-        try:
-            out = p.communicate(body)[0]
-        except:
-            continue
-        code = p.returncode
-        if code == 69 or code == 74:
-            errorexit("spamd is missconfigured (use --allow-tell)")
-        p.stdin.close()
-        if not out.strip() == alreadylearnt: h_learnt += 1
+def sa_learn_ham():
+    if opts["--learnhambox"] is not None:
         if opts["--verbose"] is True:
-            print(u, out)
-        if opts["--movehamto"] is not None:
-            res = imap.uid("COPY", u, movehamto)
-            assertok(res, "uid copy", u, movehamto)
-        if opts["--learnthendestroy"] or opts["--movehamto"] is not None:
-            res = imap.uid("STORE", u, spamflagscmd, "(\\Deleted)")
-            assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
-    if opts["--expunge"] is True or opts["--movehamto"] is not None:
-        imap.expunge()
+            print("Teach HAM to SA from:", learnhambox)
+        res = imap.select(learnhambox, 0)
+        assertok(res, 'select', learnhambox)
+        h_tolearn = int(res[1][0])
+        h_learnt = 0
+        typ, uids = imap.uid("SEARCH", None, "ALL")
+        uids = uids[0].split()
+        for u in uids:
+            body = getmessage(u)
+            p = Popen(["spamc", "--learntype=ham"],
+                      stdin=PIPE, stdout=PIPE, close_fds=True)
+            try:
+                out = p.communicate(body)[0]
+            except:
+                continue
+            code = p.returncode
+            if code == 69 or code == 74:
+                errorexit("spamd is missconfigured (use --allow-tell)")
+            p.stdin.close()
+            if not out.strip() == alreadylearnt: h_learnt += 1
+            if opts["--verbose"] is True:
+                print(u, out)
+            if opts["--movehamto"] is not None:
+                res = imap.uid("COPY", u, movehamto)
+                assertok(res, "uid copy", u, movehamto)
+            if opts["--learnthendestroy"] or opts["--movehamto"] is not None:
+                res = imap.uid("STORE", u, spamflagscmd, "(\\Deleted)")
+                assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
+        if opts["--expunge"] is True or opts["--movehamto"] is not None:
+            imap.expunge()
+
+sa_learn_ham()
 
 uids = []
 
