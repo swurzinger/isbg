@@ -376,12 +376,11 @@ def password():
                 pass
     
         # do we have to prompt?
-        if imappasswd is None:
-            if not interactive:
-                errorexit("""You need to specify your imap password and save it
-                          with the --savepw switch""", exitcodeok)
-            imappasswd = getpass.getpass("IMAP password for %s@%s: "
-                                         % (imapuser, imaphost))
+        if not interactive:
+            errorexit("""You need to specify your imap password and save it
+                      with the --savepw switch""", exitcodeok)
+        imappasswd = getpass.getpass("IMAP password for %s@%s: "
+                                     % (imapuser, imaphost))
     
         # Should we save it?
         if opts["--savepw"] is True:
