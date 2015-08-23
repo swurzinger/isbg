@@ -635,7 +635,9 @@ def check_if_spam():
    
            spamlist.append(u)
 
-check_if_spam()
+	return pastuids, spamdeletelist, spamlist
+
+pastuids, spamdeletelist, spamlist = check_if_spam()
 
 
 def spam_stats():
