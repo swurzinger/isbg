@@ -640,6 +640,12 @@ def check_if_spam():
 pastuids, spamdeletelist, spamlist = check_if_spam()
 
 
+def spam_stats():
+    nummsg = len(uids)
+    spamdeleted = len(spamdeletelist)
+    numspam = len(spamlist) + spamdeleted
+
+
 # If we found any spams, now go and mark the original messages
 def mark_as_spam():
     if numspam or spamdeleted:
@@ -694,9 +700,6 @@ logout()
 
 
 def print_stats():
-    nummsg = len(uids)
-    spamdeleted = len(spamdeletelist)
-    numspam = len(spamlist) + spamdeleted
     if opts["--nostats"] is False:
         if opts["--learnspambox"] is not None:
             print("%d/%d spams learnt") % (s_learnt, s_tolearn)
