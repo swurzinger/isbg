@@ -644,7 +644,9 @@ def spam_stats():
     nummsg = len(uids)
     spamdeleted = len(spamdeletelist)
     numspam = len(spamlist) + spamdeleted
+    return nummsg, spamdeleted, numspam
 
+nummsg, spamdeleted, numspam = spam_stats()
 
 # If we found any spams, now go and mark the original messages
 def mark_as_spam():
