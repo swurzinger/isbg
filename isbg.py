@@ -567,7 +567,10 @@ def filter_uids():
     if partialrun is not None:
         uids = uids[:int(partialrun)]
 
-filter_uids()
+    return inboxuids, pastuids, origpastuids, uids
+
+
+inboxuids, pastuids, origpastuids, uids = filter_uids()
 
 
 # Main loop that iterates over each new uid we haven't seen before
