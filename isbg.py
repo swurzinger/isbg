@@ -309,15 +309,16 @@ def setpw(pw, hash):
 
 
 def create_passwdfile():
-   if passwdfilename is None:
-       m = md5()
-       m.update(imaphost)
-       m.update(imapuser)
-       m.update(repr(imapport))
-       passwdfilename = os.path.expanduser("~" + os.sep +
+    if passwdfilename is None:
+        m = md5()
+        m.update(imaphost)
+        m.update(imapuser)
+        m.update(repr(imapport))
+        passwdfilename = os.path.expanduser("~" + os.sep +
                                            ".isbg-" + hexof(m.digest()))
+    return passwdfilename
 
-create_passwdfile()
+passwdfilename = create_passwdfile()
 
 if passwordhash is None:
     # We make hash that the password is xor'ed against
