@@ -392,6 +392,7 @@ def password():
                 pass
             f.write(hexof(setpw(imappasswd, passwordhash)))
             f.close()
+
     return imappasswd
 
 imappasswd = password()
@@ -491,8 +492,9 @@ def sa_learn_spam():
                     assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
         if opts["--expunge"] is True:
             imap.expunge()
+    return s_tolearn, s_learnt
 
-sa_learn_spam()
+s_tolearn, s_learnt = sa_learn_spam()
 
 def sa_learn_ham():
     if opts["--learnhambox"] is not None:
@@ -527,8 +529,9 @@ def sa_learn_ham():
                 assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
         if opts["--expunge"] is True or opts["--movehamto"] is not None:
             imap.expunge()
+    return h_tolearn, h_learnt
 
-sa_learn_ham()
+h_tolearn, h_learnt = sa_learn_ham()
 
 def filter_uids():
     if opts["--teachonly"] is False:
