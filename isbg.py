@@ -265,7 +265,7 @@ def argument_processing():
         if partialrun < 1:
             errorexit("Partial run number must be equal to 1 or higher")
 
-argument_processing():
+argument_processing()
 
 # fixup any arguments
 
@@ -320,7 +320,7 @@ def create_passwdfile():
        passwdfilename = os.path.expanduser("~" + os.sep +
                                            ".isbg-" + hexof(m.digest()))
 
-create_passwdfile():
+create_passwdfile()
 
 if passwordhash is None:
     # We make hash that the password is xor'ed against
