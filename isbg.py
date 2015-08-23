@@ -379,6 +379,7 @@ def password():
         if not interactive:
             errorexit("""You need to specify your imap password and save it
                       with the --savepw switch""", exitcodeok)
+
         imappasswd = getpass.getpass("IMAP password for %s@%s: "
                                      % (imapuser, imaphost))
     
@@ -391,8 +392,10 @@ def password():
                 pass
             f.write(hexof(setpw(imappasswd, passwordhash)))
             f.close()
+    return imappasswd
 
-password()
+imappasswd = password()
+
 
 # Retrieve the entire message
 def getmessage(uid, append_to=None):
