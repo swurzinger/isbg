@@ -308,7 +308,7 @@ def setpw(pw, hash):
     return string.join(res, '')
 
 
-def create_passwdfile():
+def create_passwdfile(passwdfilename):
     if passwdfilename is None:
         m = md5()
         m.update(imaphost)
@@ -318,7 +318,7 @@ def create_passwdfile():
                                            ".isbg-" + hexof(m.digest()))
     return passwdfilename
 
-passwdfilename = create_passwdfile()
+passwdfilename = create_passwdfile(passwdfilename)
 
 if passwordhash is None:
     # We make hash that the password is xor'ed against
@@ -364,7 +364,7 @@ def lockfile():
 lockfile()
 
 # Figure out the password
-def password():
+def password(imappasswd):
     if imappasswd is None:
         if opts["--savepw"] is False and os.path.exists(passwdfilename) is True:
             try:
@@ -395,7 +395,7 @@ def password():
 
     return imappasswd
 
-imappasswd = password()
+imappasswd = password(imappasswd)
 
 
 # Retrieve the entire message
