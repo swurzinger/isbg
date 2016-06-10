@@ -282,12 +282,12 @@ if pastuidsfile is None:
 
 
 # Delete lock file
-def removelock():
+def removelock(lockfilename):
     os.remove(lockfilename)
 
 
 # Password stuff
-def getpw(data, hash):
+def getpw(data, hash, passwordhashlen):
     res = ""
     for i in range(0, passwordhashlen):
         c = ord(data[i]) ^ ord(hash[i])
@@ -297,7 +297,7 @@ def getpw(data, hash):
     return res
 
 
-def setpw(pw, hash):
+def setpw(pw, hash, passwordhaslen):
     if len(pw) > passwordhashlen:
         raise ValueError("""Password of length %d is too long to
                          store (max accepted is %d)"""
@@ -308,7 +308,7 @@ def setpw(pw, hash):
     return string.join(res, '')
 
 
-def create_passwdfile(passwdfilename):
+def create_passwdfile(passwdfilename, imaphost, imapuser, imapport):
     if passwdfilename is None:
         m = md5()
         m.update(imaphost)
@@ -318,7 +318,7 @@ def create_passwdfile(passwdfilename):
                                            ".isbg-" + hexof(m.digest()))
     return passwdfilename
 
-passwdfilename = create_passwdfile(passwdfilename)
+passwdfilename = create_passwdfile(passwdfilename, imaphost, imapuser, imapport)
 
 if passwordhash is None:
     # We make hash that the password is xor'ed against
@@ -335,17 +335,17 @@ if passwordhash is None:
         passwordhash = passwordhash + m.digest()
 
 
-def print_file_infos():
+def print_file_infos(opts, lockfilename, pastuidsfile, spamflags, passwdfilename):
     if opts["--verbose"] is True:
         print("Lock file is", lockfilename)
         print("Trackfile is", pastuidsfile)
         print("SpamFlags are", spamflags)
         print("Password file is", passwdfilename)
 
-print_file_infos()
+print_file_infos(opts, lockfilename, pastuidsfile, spamflags, passwdfilename)
 
 # Acquire lockfilename or exit
-def lockfile():
+def lockfile(opts, lockfilename, lockfilegrace, exitcodelocked):
     if opts["--ignorelockfile"] is True:
         if opts["--verbose"] is True:
             print("Lock file is ignored. Continue.")
@@ -361,15 +361,17 @@ def lockfile():
             lockfile.write(repr(os.getpid()))
             lockfile.close()
 
-lockfile()
+lockfile(opts, lockfilename, lockfilegrace, exitcodelocked)
 
 # Figure out the password
-def password(imappasswd):
+def password(imappasswd, opts, passwdfilename, passwdhash, passwdhashlen,
+             exitcodeok, imapuser, imaphost):
     if imappasswd is None:
         if opts["--savepw"] is False and os.path.exists(passwdfilename) is True:
             try:
                 imappasswd = getpw(dehexof(open(passwdfilename, "rb").read()),
-                                   passwordhash)
+                                   passwordhash.
+                                   passwordhashlen)
                 if opts["--verbose"] is True:
                     print("Successfully read password file")
             except:
@@ -390,20 +392,21 @@ def password(imappasswd):
                 os.chmod(passwdfilename, 0600)
             except:
                 pass
-            f.write(hexof(setpw(imappasswd, passwordhash)))
+            f.write(hexof(setpw(imappasswd, passwordhash, passwordhashlen)))
             f.close()
 
     return imappasswd
 
-imappasswd = password(imappasswd)
+imappasswd = password(imappasswd, opts, passwdfilename, passwdhash,
+                      passwdhashlen, exitcodeok, imapuser, imaphost)
 
 
 # Retrieve the entire message
-def getmessage(uid, append_to=None):
+def getmessage(opts, uid, append_to=None):
     res = imap.uid("FETCH", uid, "(RFC822)")
-    assertok(res, 'uid fetch', uid, '(RFC822)')
+    assertok(opts, exitcodeimap, res, 'uid fetch', uid, '(RFC822)')
     if res[0] != "OK":
-        assertok(res, 'uid fetch', uid, '(RFC822)')
+        assertok(opts, exitcodeimap, res, 'uid fetch', uid, '(RFC822)')
         try:
             body = res[1][0][1]
         except:
@@ -431,7 +434,7 @@ def crnlify(text):
 # This function checks that the return code is OK
 # It also prints out what happened (which would end
 # up /dev/null'ed in non-verbose mode)
-def assertok(res, *args):
+def assertok(opts, exitcodeimap, res, *args):
     if opts["--verbose"] is True:
         print(repr(args), "=", res)
     if res[0] != "OK":
@@ -441,34 +444,35 @@ def assertok(res, *args):
 # Main code starts here
 
 # Authenticate (only simple supported)
-def login():
+def login(imapuser, imappasswd, opts, exitcodeimap):
     res = imap.login(imapuser, imappasswd)
-    assertok(res, "login", imapuser, 'xxxxxxxx')
+    assertok(opts, exitcodeimap, res, "login", imapuser, 'xxxxxxxx')
 
-login()
+login(imapuser, imappasswd, opts, exitcodeimap)
 
 # List imap directories
-def imap_list():
+def imap_list(opts):
     if opts["--imaplist"] is True:
         imap_list = str(imap.list())
         imap_list = re.sub('\(.*?\)| \".\" \"|\"\', \''," ",imap_list) # string formatting
         print(imap_list)
 
-imap_list()
+imap_list(opts)
 
 # Spamassassin training
-def sa_learn_spam():
+def sa_learn_spam(opts, learnspambox, exitcodeimap, alreadylearnt,
+                  spamflagscmd):
     if opts["--learnspambox"] is not None:
         if opts["--verbose"] is True:
             print("Teach SPAM to SA from:", learnspambox)
         res = imap.select(learnspambox, 0)
-        assertok(res, 'select', learnspambox)
+        assertok(opts, exitcodeimap, res, 'select', learnspambox)
         s_tolearn = int(res[1][0])
         s_learnt = 0
         typ, uids = imap.uid("SEARCH", None, "ALL")
         uids = uids[0].split()
         for u in uids:
-            body = getmessage(u)
+            body = getmessage(opts, u)
             p = Popen(["spamc", "--learntype=spam"],
                       stdin=PIPE, stdout=PIPE, close_fds=True)
             try:
@@ -486,28 +490,30 @@ def sa_learn_spam():
             if opts["--learnthendestroy"] is True:
                 if opts["--gmail"] is True:
                     res = imap.uid("COPY", u, "[Gmail]/Trash")
-                    assertok(res, "uid copy", u, "[Gmail]/Trash")
+                    assertok(opts, exitcodeimap, res, "uid copy", u, "[Gmail]/Trash")
                 else:
                     res = imap.uid("STORE", u, spamflagscmd, "(\\Deleted)")
-                    assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
+                    assertok(opts, exitcodeimap, res, "uid store", u, spamflagscmd, "(\\Deleted)")
         if opts["--expunge"] is True:
             imap.expunge()
     return s_tolearn, s_learnt
 
-s_tolearn, s_learnt = sa_learn_spam()
+s_tolearn, s_learnt = sa_learn_spam(opts, learnspambox, exitcodeimap,
+                                    alreadylearnt, spamflagscmd)
 
-def sa_learn_ham():
+def sa_learn_ham(opts, learnhambox, exitcodeimap, alreadylearnt, movehamto,
+                 spamflagscmd):
     if opts["--learnhambox"] is not None:
         if opts["--verbose"] is True:
             print("Teach HAM to SA from:", learnhambox)
         res = imap.select(learnhambox, 0)
-        assertok(res, 'select', learnhambox)
+        assertok(opts, exitcodeimap, res, 'select', learnhambox)
         h_tolearn = int(res[1][0])
         h_learnt = 0
         typ, uids = imap.uid("SEARCH", None, "ALL")
         uids = uids[0].split()
         for u in uids:
-            body = getmessage(u)
+            body = getmessage(opts, u)
             p = Popen(["spamc", "--learntype=ham"],
                       stdin=PIPE, stdout=PIPE, close_fds=True)
             try:
@@ -523,25 +529,27 @@ def sa_learn_ham():
                 print(u, out)
             if opts["--movehamto"] is not None:
                 res = imap.uid("COPY", u, movehamto)
-                assertok(res, "uid copy", u, movehamto)
+                assertok(opts, exitcodeimap, res, "uid copy", u, movehamto)
             if opts["--learnthendestroy"] or opts["--movehamto"] is not None:
                 res = imap.uid("STORE", u, spamflagscmd, "(\\Deleted)")
-                assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
+                assertok(opts, exitcodeimap, res, "uid store", u, spamflagscmd, "(\\Deleted)")
         if opts["--expunge"] is True or opts["--movehamto"] is not None:
             imap.expunge()
     return h_tolearn, h_learnt
 
-h_tolearn, h_learnt = sa_learn_ham()
+h_tolearn, h_learnt = sa_learn_ham(opts, learnhambox, exitcodeimap,
+                                   alreadylearnt, movehamto, spamflagscmd)
 
-def filter_uids():
+def filter_uids(opts, spaminbox, exitcodeimap, imapinbox, maxsize,
+                pastuidsfile, partialrun):
     if opts["--teachonly"] is False:
         # check spaminbox exists by examining it
         res = imap.select(spaminbox, 1)
-        assertok(res, 'select', spaminbox, 1)
+        assertok(opts, exitcodeimap, res, 'select', spaminbox, 1)
     
         # select inbox
         res = imap.select(imapinbox, 1)
-        assertok(res, 'select', imapinbox, 1)
+        assertok(opts, exitcodeimap, res, 'select', imapinbox, 1)
     
         # get the uids of all mails with a size less then the maxsize
         typ, inboxuids = imap.uid("SEARCH", None, "SMALLER", maxsize)
@@ -570,14 +578,20 @@ def filter_uids():
     return inboxuids, pastuids, origpastuids, uids
 
 
-inboxuids, pastuids, origpastuids, uids = filter_uids()
+inboxuids, pastuids, origpastuids, uids = filter_uids(opts,
+                                                      spaminbox,
+                                                      exitcodeimap,
+                                                      imapinbox,
+                                                      maxsize,
+                                                      pastuidsfile,
+                                                      partialrun)
 
 
 # Main loop that iterates over each new uid we haven't seen before
-def check_if_spam():
+def check_if_spam(opts, pastuids, exitcodespamc, deletehigherthan, spaminbox):
     for u in uids:
         # Retrieve the entire message
-        body = getmessage(u, pastuids)
+        body = getmessage(opts, u, pastuids)
    
         # Feed it to SpamAssassin in test mode
         p = Popen(satest, stdin=PIPE, stdout=PIPE, close_fds=True)
@@ -631,47 +645,54 @@ def check_if_spam():
             else:
                 # just copy it as is
                 res = imap.uid("COPY", u, spaminbox)
-                assertok(res, "uid copy", u, spaminbox)
+                assertok(opts, exitcodeimap, res, "uid copy", u, spaminbox)
    
             spamlist.append(u)
 
         return pastuids, spamdeletelist, spamlist
 
-pastuids, spamdeletelist, spamlist = check_if_spam()
+pastuids, spamdeletelist, spamlist = check_if_spam(opts,
+                                                   pastuids,
+                                                   exitcodespamc,
+                                                   deletehigherthan,
+                                                   spaminbox)
 
 
-def spam_stats():
+def spam_stats(uids, spamdeletelist, spamlist, spamdeleted):
     nummsg = len(uids)
     spamdeleted = len(spamdeletelist)
     numspam = len(spamlist) + spamdeleted
     return nummsg, spamdeleted, numspam
 
-nummsg, spamdeleted, numspam = spam_stats()
+nummsg, spamdeleted, numspam = spam_stats(uids, spamdeletelist, spamlist,
+                                          spamdeleted)
 
 # If we found any spams, now go and mark the original messages
-def mark_as_spam():
+def mark_as_spam(numspam, spamdeleted, imapinbox, opts, exitcodeimap,
+                 spamflags, spamlist, spamdeletelist, inboxuids,
+                 origpastuids, pastuidsfile):
     if numspam or spamdeleted:
         res = imap.select(imapinbox)
-        assertok(res, 'select', imapinbox)
+        assertok(opts, exitcodeimap, res, 'select', imapinbox)
         # Only set message flags if there are any
         if len(spamflags) > 2:
             for u in spamlist:
                 res = imap.uid("STORE", u, spamflagscmd, spamflags)
-                assertok(res, "uid store", u, spamflagscmd, spamflags)
+                assertok(opts, exitcodeimap, res, "uid store", u, spamflagscmd, spamflags)
                 pastuids.append(u)
         # If its gmail, and --delete was passed, we actually copy!
         if opts["--delete"] is True and opts["--gmail"] is True:
             for u in spamlist:
                 res = imap.uid("COPY", u, "[Gmail]/Trash")
-                assertok(res, "uid copy", u, "[Gmail]/Trash")
+                assertok(opts, exitcodeimap, res, "uid copy", u, "[Gmail]/Trash")
         # Set deleted flag for spam with high score
         for u in spamdeletelist:
             if opts["--gmail"] is True:
                 res = imap.uid("COPY", u, "[Gmail]/Trash")
-                assertok(res, "uid copy", u, "[Gmail]/Trash")
+                assertok(opts, exitcodeimap, res, "uid copy", u, "[Gmail]/Trash")
             else:
                 res = imap.uid("STORE", u, spamflagscmd, "(\\Deleted)")
-                assertok(res, "uid store", u, spamflagscmd, "(\\Deleted)")
+                assertok(opts, exitcodeimap, res, "uid store", u, spamflagscmd, "(\\Deleted)")
         if opts["--expunge"] is True:
             imap.expunge()
 
@@ -691,7 +712,8 @@ def mark_as_spam():
             f.write("\n")
             f.close()
 
-mark_as_spam()
+mark_as_spam(numspam, spamdeleted, imapinbox, opts, exitcodeimap, spamflags,
+             spamlist, spamdeletelist, inboxuids, origpastuids, pastuidsfile)
 
 # sign off
 def logout():
@@ -701,7 +723,8 @@ def logout():
 logout()
 
 
-def print_stats():
+def print_stats(opts, s_learnt, s_tolearn, h_learnt, h_tolearn, numspam,
+                nummsg, spamdeleted):
     if opts["--nostats"] is False:
         if opts["--learnspambox"] is not None:
             print("%d/%d spams learnt") % (s_learnt, s_tolearn)
@@ -711,8 +734,10 @@ def print_stats():
             print("%d spams found in %d messages") % (numspam, nummsg)
             print("%d/%d was automatically deleted") % (spamdeleted, numspam)
 
+print_stats(opts, s_learnt, s_tolearn, h_learnt, h_tolearn, numspam, nummsg,
+            spamdeleted):
 
-def exitcodes():
+def exitcodes(opts, nummsg, exitcodenewmsgs, numspam, exitcodenewspam):
     if opts["--exitcodes"] is True and nummsg:
         res = 0
         if numspam == 0:
@@ -721,7 +746,7 @@ def exitcodes():
             sys.exit(exitcodenewspam)
         sys.exit(exitcodenewmsgspam)
 
-exitcodes()
+exitcodes(opts, nummsg, exitcodenewmsgs, numspam, exitcodenewspam):
 
-removelock()
+removelock(lockfilename)
 sys.exit(exitcodeok)
