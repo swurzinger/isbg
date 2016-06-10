@@ -498,6 +498,9 @@ def sa_learn_spam(opts, learnspambox, exitcodeimap, alreadylearnt,
                     assertok(opts, exitcodeimap, res, "uid store", u, spamflagscmd, "(\\Deleted)")
         if opts["--expunge"] is True:
             imap.expunge()
+    else:
+        s_tolearn = None
+        s_learnt = None
     return s_tolearn, s_learnt
 
 s_tolearn, s_learnt = sa_learn_spam(opts, learnspambox, exitcodeimap,
