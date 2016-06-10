@@ -88,6 +88,7 @@ imapinbox = "INBOX"
 spaminbox = "INBOX.spam"
 learnspambox = None
 learnhambox = None
+movehamto = None
 interactive = sys.stdin.isatty()
 maxsize = 120000  # messages larger than this aren't considered
 pastuidsfile = None
@@ -540,6 +541,9 @@ def sa_learn_ham(opts, learnhambox, exitcodeimap, alreadylearnt, movehamto,
                 assertok(opts, exitcodeimap, res, "uid store", u, spamflagscmd, "(\\Deleted)")
         if opts["--expunge"] is True or opts["--movehamto"] is not None:
             imap.expunge()
+    else:
+        h_tolearn = None
+        h_learnt = None
     return h_tolearn, h_learnt
 
 h_tolearn, h_learnt = sa_learn_ham(opts, learnhambox, exitcodeimap,
