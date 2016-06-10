@@ -364,7 +364,7 @@ def lockfile(opts, lockfilename, lockfilegrace, exitcodelocked):
 lockfile(opts, lockfilename, lockfilegrace, exitcodelocked)
 
 # Figure out the password
-def password(imappasswd, opts, passwdfilename, passwdhash, passwdhashlen,
+def password(imappasswd, opts, passwdfilename, passwordhash, passwordhashlen,
              exitcodeok, imapuser, imaphost):
     if imappasswd is None:
         if opts["--savepw"] is False and os.path.exists(passwdfilename) is True:
@@ -397,8 +397,8 @@ def password(imappasswd, opts, passwdfilename, passwdhash, passwdhashlen,
 
     return imappasswd
 
-imappasswd = password(imappasswd, opts, passwdfilename, passwdhash,
-                      passwdhashlen, exitcodeok, imapuser, imaphost)
+imappasswd = password(imappasswd, opts, passwdfilename, passwordhash,
+                      passwordhashlen, exitcodeok, imapuser, imaphost)
 
 
 # Retrieve the entire message
