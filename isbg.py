@@ -735,7 +735,7 @@ def print_stats(opts, s_learnt, s_tolearn, h_learnt, h_tolearn, numspam,
             print("%d/%d was automatically deleted") % (spamdeleted, numspam)
 
 print_stats(opts, s_learnt, s_tolearn, h_learnt, h_tolearn, numspam, nummsg,
-            spamdeleted):
+            spamdeleted)
 
 def exitcodes(opts, nummsg, exitcodenewmsgs, numspam, exitcodenewspam):
     if opts["--exitcodes"] is True and nummsg:
@@ -746,7 +746,7 @@ def exitcodes(opts, nummsg, exitcodenewmsgs, numspam, exitcodenewspam):
             sys.exit(exitcodenewspam)
         sys.exit(exitcodenewmsgspam)
 
-exitcodes(opts, nummsg, exitcodenewmsgs, numspam, exitcodenewspam):
+exitcodes(opts, nummsg, exitcodenewmsgs, numspam, exitcodenewspam)
 
 removelock(lockfilename)
 sys.exit(exitcodeok)
