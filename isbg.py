@@ -91,6 +91,7 @@ learnhambox = None
 movehamto = None
 interactive = sys.stdin.isatty()
 maxsize = 120000  # messages larger than this aren't considered
+deletehigherthan= 0
 pastuidsfile = None
 lockfilegrace = 240
 alreadylearnt = "Message was already un/learned"
