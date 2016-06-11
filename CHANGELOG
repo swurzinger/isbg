@@ -1,7 +1,9 @@
-1.00 (20160106)
-=====================
-What has been done since last release
+1.01 (20160606)
+===============
+  * Move all the loose code to function in preparation for a decent rewrite
 
+1.00 (20160106)
+===============
   * The CLI interface is now implemented with docopt
   * The README now includes the documentation
   * New command --imaplist lists the directories in IMAP account

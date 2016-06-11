@@ -175,7 +175,7 @@ def dehexof(x):
 
 # Argument processing
 try:
-    opts = docopt(__doc__, version="isbg version 1.00")
+    opts = docopt(__doc__, version="isbg version 1.01")
 except Exception, e:
     errorexit("Option processing failed - " + str(e))
 
