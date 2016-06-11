@@ -175,7 +175,7 @@ def dehexof(x):
 
 # Argument processing
 try:
-    opts = docopt(__doc__, version="isbg version 0.99")
+    opts = docopt(__doc__, version="isbg version 1.00")
 except Exception, e:
     errorexit("Option processing failed - " + str(e))
 
@@ -463,10 +463,35 @@ def imap_list(opts):
 
 imap_list(opts)
 
+<<<<<<< HEAD
 # Spamassassin training
 def sa_learn_spam(opts, learnspambox, exitcodeimap, alreadylearnt,
                   spamflagscmd):
     if opts["--learnspambox"] is not None:
+=======
+if opts["--learnhambox"] is not None:
+    if opts["--verbose"] is True:
+        print("Teach HAM to SA from:", learnhambox)
+    res = imap.select(learnhambox, 0)
+    assertok(res, 'select', learnhambox)
+    h_tolearn = int(res[1][0])
+    h_learnt = 0
+    typ, uids = imap.uid("SEARCH", None, "ALL")
+    uids = uids[0].split()
+    for u in uids:
+        body = getmessage(u)
+        p = Popen(["spamc", "--learntype=ham"],
+                  stdin=PIPE, stdout=PIPE, close_fds=True)
+        try:
+            out = p.communicate(body)[0]
+        except:
+            continue
+        code = p.returncode
+        if code == 69 or code == 74:
+            errorexit("spamd is misconfigured (use --allow-tell)")
+        p.stdin.close()
+        if not out.strip() == alreadylearnt: h_learnt += 1
+>>>>>>> 49e79c9ea8dde8b6183493e27ae8a5ccb50fddf7
         if opts["--verbose"] is True:
             print("Teach SPAM to SA from:", learnspambox)
         res = imap.select(learnspambox, 0)
