@@ -668,14 +668,13 @@ pastuids, spamdeletelist, spamlist = check_if_spam(opts,
                                                    spaminbox)
 
 
-def spam_stats(uids, spamdeletelist, spamlist, spamdeleted):
+def spam_stats(uids, spamdeletelist, spamlist):
     nummsg = len(uids)
     spamdeleted = len(spamdeletelist)
     numspam = len(spamlist) + spamdeleted
     return nummsg, spamdeleted, numspam
 
-nummsg, spamdeleted, numspam = spam_stats(uids, spamdeletelist, spamlist,
-                                          spamdeleted)
+nummsg, spamdeleted, numspam = spam_stats(uids, spamdeletelist, spamlist)
 
 # If we found any spams, now go and mark the original messages
 def mark_as_spam(numspam, spamdeleted, imapinbox, opts, exitcodeimap,
@@ -726,11 +725,11 @@ mark_as_spam(numspam, spamdeleted, imapinbox, opts, exitcodeimap, spamflags,
              spamlist, spamdeletelist, inboxuids, origpastuids, pastuidsfile)
 
 # sign off
-def logout():
+def logout(imap):
     imap.logout()
     del imap
 
-logout()
+logout(imap)
 
 
 def print_stats(opts, s_learnt, s_tolearn, h_learnt, h_tolearn, numspam,
