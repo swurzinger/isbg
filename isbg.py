@@ -374,30 +374,31 @@ def password(imappasswd, opts, passwdfilename, passwordhash, passwordhashlen,
         if opts["--savepw"] is False and os.path.exists(passwdfilename) is True:
             try:
                 imappasswd = getpw(dehexof(open(passwdfilename, "rb").read()),
-                                   passwordhash.
+                                   passwordhash,
                                    passwordhashlen)
                 if opts["--verbose"] is True:
                     print("Successfully read password file")
             except:
                 pass
-    
+            
+        if imappasswd is None:
         # do we have to prompt?
-        if not interactive:
-            errorexit("""You need to specify your imap password and save it
-                      with the --savepw switch""", exitcodeok)
+            if not interactive:
+                errorexit("""You need to specify your imap password and save it
+                        with the --savepw switch""", exitcodeok)
 
-        imappasswd = getpass.getpass("IMAP password for %s@%s: "
+            imappasswd = getpass.getpass("IMAP password for %s@%s: "
                                      % (imapuser, imaphost))
     
-        # Should we save it?
-        if opts["--savepw"] is True:
-            f = open(passwdfilename, "wb+")
-            try:
-                os.chmod(passwdfilename, 0600)
-            except:
-                pass
-            f.write(hexof(setpw(imappasswd, passwordhash, passwordhashlen)))
-            f.close()
+            # Should we save it?
+            if opts["--savepw"] is True:
+                f = open(passwdfilename, "wb+")
+                try:
+                    os.chmod(passwdfilename, 0600)
+                except:
+                    pass
+                f.write(hexof(setpw(imappasswd, passwordhash, passwordhashlen)))
+                f.close()
 
     return imappasswd
 
