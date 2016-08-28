@@ -442,7 +442,7 @@ if opts["--learnspambox"] is not None:
     s_tolearn = int(res[1][0])
     s_learnt = 0
     typ, uids = imap.uid("SEARCH", None, "ALL")
-    uids = uids[0].split()
+    uids = sorted(uids[0].split(), reverse=True)
     for u in uids:
         body = getmessage(u)
         p = Popen(["spamc", "--learntype=spam"],
@@ -477,7 +477,7 @@ if opts["--learnhambox"] is not None:
     h_tolearn = int(res[1][0])
     h_learnt = 0
     typ, uids = imap.uid("SEARCH", None, "ALL")
-    uids = uids[0].split()
+    uids = sorted(uids[0].split(), reverse=True)
     for u in uids:
         body = getmessage(u)
         p = Popen(["spamc", "--learntype=ham"],
@@ -515,7 +515,7 @@ if opts["--teachonly"] is False:
 
     # get the uids of all mails with a size less then the maxsize
     typ, inboxuids = imap.uid("SEARCH", None, "SMALLER", maxsize)
-    inboxuids = inboxuids[0].split()
+    inboxuids = sorted(inboxuids[0].split(), reverse=True)
 
     # pastuids keeps track of which uids we have already seen, so
     # that we don't analyze them multiple times. We store its
