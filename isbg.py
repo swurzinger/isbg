@@ -31,6 +31,13 @@ Options:
     --imappasswd passwd  IMAP account password
     --imapport port      Use a custom port
     --imapuser username  Who you login as
+    --imapproxyuser userbox     Use proxyauth on IMAP host. If set, allows
+                         the sysadmin or a secretary (identified by username
+                         and passwd above) to log into the IMAP server and
+                         administer the userbox account specified here.
+                         Otherwise the username accesses his or her own box.
+                         Required by Sun/iPlanet/Netscape IMAP servers to
+                         be able to use an administrative user.
     --imapinbox mbox     Name of your inbox folder
     --learnspambox mbox  Name of your learn spam folder
     --learnhambox mbox   Name of your learn ham folder
@@ -83,6 +90,7 @@ except ImportError:
 
 
 imapuser = ''
+imapproxyuser = None
 imaphost = 'localhost'
 imappasswd = None
 imapinbox = "INBOX"
@@ -201,6 +209,9 @@ if opts["--imapport"] is not None:
 
 if opts["--imapuser"] is not None:
     imapuser = opts["--imapuser"]
+
+if opts["--imapproxyuser"] is not None:
+    imapproxyuser = opts["--imapproxyuser"]
 
 if opts["--imapinbox"] is not None:
     imapinbox = opts["--imapinbox"]
@@ -426,6 +437,12 @@ else:
 # Authenticate (only simple supported)
 res = imap.login(imapuser, imappasswd)
 assertok(res, "login", imapuser, 'xxxxxxxx')
+
+if opts["--imapproxyuser"] is not None:
+    if opts["--verbose"] is True:
+        print("Logged in as %s, now setting proxyauth to administer mailbox of %s" % (imapuser, imapproxyuser))
+    res = imap.proxyauth(imapproxyuser)
+    assertok(res, "proxyauth", imapproxyuser, 'xxxxxxxx')
 
 # List imap directories
 if opts["--imaplist"] is True:

@@ -172,6 +172,13 @@ Options:
     --imappasswd passwd  IMAP account password
     --imapport port      Use a custom port
     --imapuser username  Who you login as
+    --imapproxyuser userbox     Use proxyauth on IMAP host. If set, allows
+                         the sysadmin or a secretary (identified by username
+                         and passwd above) to log into the IMAP server and
+                         administer the userbox account specified here.
+                         Otherwise the username accesses his or her own box.
+                         Required by Sun/iPlanet/Netscape IMAP servers to
+                         be able to use an administrative user.
     --imapinbox mbox     Name of your inbox folder
     --learnspambox mbox  Name of your learn spam folder
     --learnhambox mbox   Name of your learn ham folder
@@ -278,6 +285,32 @@ To run isbg for multiple accounts one after another, it is possible to use
 bash scripts like the ones in the folder "bash_scripts". Since these scripts
 contain passwords and are thus sensitive data, make sure the file permissions
 are very restrictive.
+
+# Proxy authentication<a name="Proxy-auth"></a>
+
+Many IMAP servers support a `PROXYAUTH` command so that the authenticated
+session can access another mailbox (assuming that access rights are set up
+on the server accordingly). Main use-case of this is when server or domain
+administrators (or similar mail-system accounts) undertake some maintenance
+activities in users' mailboxes, such as learning from email that users have
+put into their `Spam` or `Junk` folders, or running over unsorted email in
+the `INBOX` to re-classify and sort away possible spam missed earlier.
+Another common use-case is when an administrative aide or a secretary does
+some work in the big boss's mailbox on his or her behalf.
+
+The `isbg` supports IMAP Proxy Authentication using the following command
+line pattern:
+
+````
+$ ./isbg.py --imapuser mailadmin --imappasswd Adm1nPaSs \
+    --imaphost imap.domain.com --imapproxyuser enduser@domain.com --imaplist
+
+  "/" INBOX', '  "/" Drafts', '  "/" Junk', '  "/" Sent', '  "/" trusted'])
+````
+
+Here the `--imapuser` and `--imappasswd` still refer to the account you log in
+as (but this time it is the administrative account), and the `--imapproxyuser`
+refers to the end-user whose mailbox you administer.
 
 # Saving your password<a name="Saving-your-password"></a>
 
