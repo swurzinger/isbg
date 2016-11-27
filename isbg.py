@@ -90,7 +90,7 @@ try:
 except ImportError:
     from md5 import md5
 
-
+imap = None
 imapuser = ''
 imapproxyuser = None
 imaphost = 'localhost'
@@ -144,6 +144,13 @@ partialrun = None
 
 
 def errorexit(msg, exitcode=exitcodeflags):
+    try:
+        global imap
+        if imap is not None:
+            imap.logout()
+            imap = None
+    except:
+        pass
     sys.stderr.write(msg)
     sys.stderr.write("\nUse --help to see valid options and arguments\n")
     sys.exit(exitcode)
@@ -725,7 +732,7 @@ if opts["--teachonly"] is False:
 
 # sign off
 imap.logout()
-del imap
+imap = None
 
 
 if opts["--nostats"] is False:
