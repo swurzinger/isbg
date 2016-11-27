@@ -454,7 +454,7 @@ if opts["--imaplist"] is True:
 if opts["--learnspambox"] is not None:
     if opts["--verbose"] is True:
         print("Teach SPAM to SA from:", learnspambox)
-    res = imap.select(learnspambox, 0)
+    res = imap.select(learnspambox, readonly=False)
     assertok(res, 'select', learnspambox)
     s_tolearn = int(res[1][0])
     s_learnt = 0
@@ -489,7 +489,7 @@ if opts["--learnspambox"] is not None:
 if opts["--learnhambox"] is not None:
     if opts["--verbose"] is True:
         print("Teach HAM to SA from:", learnhambox)
-    res = imap.select(learnhambox, 0)
+    res = imap.select(learnhambox, readonly=False)
     assertok(res, 'select', learnhambox)
     h_tolearn = int(res[1][0])
     h_learnt = 0
@@ -523,11 +523,11 @@ uids = []
 
 if opts["--teachonly"] is False:
     # check spaminbox exists by examining it
-    res = imap.select(spaminbox, 1)
+    res = imap.select(spaminbox, readonly=True)
     assertok(res, 'select', spaminbox, 1)
 
     # select inbox
-    res = imap.select(imapinbox, 1)
+    res = imap.select(imapinbox, readonly=True)
     assertok(res, 'select', imapinbox, 1)
 
     # get the uids of all mails with a size less then the maxsize
