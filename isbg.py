@@ -56,6 +56,7 @@ Options:
     --savepw             Store the password to be used in future runs
     --spamc              Use spamc instead of standalone SpamAssassin binary
     --spaminbox mbox     Name of your spam folder
+    --createspaminbox    Enable creation of the spam folder if missing
     --nossl              Don't use SSL to connect to the IMAP server
     --teachonly          Don't search spam, just learn from folders
     --trackfile file     Override the trackfile name
@@ -95,6 +96,7 @@ imaphost = 'localhost'
 imappasswd = None
 imapinbox = "INBOX"
 spaminbox = "INBOX.spam"
+createspaminbox = False
 interactive = sys.stdin.isatty()
 maxsize = 120000  # messages larger than this aren't considered
 pastuidsfile = None
@@ -252,6 +254,9 @@ if opts["--spamc"] is True:
 
 if opts["--spaminbox"] is not None:
     spaminbox = opts["--spaminbox"]
+
+if opts["--createspaminbox"] is True:
+    createspaminbox = True
 
 if opts["--lockfilename"] is not None:
     lockfilename = opts["--lockfilename"]
@@ -534,8 +539,20 @@ uids = []
 
 if opts["--teachonly"] is False:
     # check spaminbox exists by examining it
-    res = imap.select(spaminbox, readonly=True)
-    assertok(res, 'select', spaminbox, 1)
+    try:
+        res = imap.select(spaminbox, readonly=True)
+        if res[0] != "OK":
+            raise Exception("Missing spaminbox folder, see if we can create one...")
+    except:
+        try:
+            if createspaminbox is True:
+                print("Trying to create the missing spaminbox folder : %s ..." % spaminbox)
+                res = imap.create(spaminbox)
+                assertok(res, 'create', spaminbox, 1)
+            else:
+                raise Exception("Missing spaminbox folder and not instruction to create it : %s" % spaminbox)
+        except Exception, e:
+                errorexit("Can not access spaminbox folder : %s" % str(e))
 
     # select inbox
     res = imap.select(imapinbox, readonly=True)

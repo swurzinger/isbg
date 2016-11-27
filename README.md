@@ -197,6 +197,7 @@ Options:
     --savepw             Store the password to be used in future runs
     --spamc              Use spamc instead of standalone SpamAssassin binary
     --spaminbox mbox     Name of your spam folder
+    --createspaminbox    Enable creation of the spam folder if missing
     --nossl              Don't use SSL to connect to the IMAP server
     --teachonly          Don't search spam, just learn from folders
     --trackfile file     Override the trackfile name
