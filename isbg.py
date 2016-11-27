@@ -6,7 +6,7 @@ isbg scans an IMAP Inbox and runs every entry against SpamAssassin.
 For any entries that match, the message is copied to another folder,
 and the original marked or deleted.
 
-This software was mainly written Roger Binns <rogerb@rogerbinns.com>
+This software was mainly written by Roger Binns <rogerb@rogerbinns.com>
 and maintained by Thomas Lecavelier <thomas@lecavelier.name> since
 novembre 2009. You may use isbg under any OSI approved open source
 license such as those listed at http://opensource.org/licenses/alphabetical
@@ -59,12 +59,12 @@ Options:
 
 """
 
-import sys  # Because sys.stderr.write() is called bellow
+import sys  # Because sys.stderr.write() is called below
 
 try:
     from docopt import docopt  # Creating command-line interface
 except ImportError:
-    sys.stderr.write("Missing dependency: docopt")
+    sys.stderr.write("Missing dependency: docopt\n")
 
 from subprocess import Popen, PIPE
 
