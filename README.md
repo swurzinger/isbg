@@ -202,6 +202,7 @@ Options:
     --teachonly          Don't search spam, just learn from folders
     --trackfile file     Override the trackfile name
     --verbose            Show IMAP stuff happening
+    --verbose-sa         Show SpamAssassin stuff happening
     --version            Show the version information
 
     (Your inbox will remain untouched unless you specify --flag or --delete)

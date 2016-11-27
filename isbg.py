@@ -61,6 +61,7 @@ Options:
     --teachonly          Don't search spam, just learn from folders
     --trackfile file     Override the trackfile name
     --verbose            Show IMAP stuff happening
+    --verbose-sa         Show SpamAssassin stuff happening
     --version            Show the version information
 
     (Your inbox will remain untouched unless you specify --flag or --delete)
@@ -251,6 +252,23 @@ if opts["--spamc"] is True:
     spamc = True
     satest = ["spamc", "-c"]
     sasave = ["spamc"]
+    if opts["--verbose-sa"] is True:
+        satest.append("-R")
+        satest.append("-l")
+        sasave.append("-R")
+        sasave.append("-l")
+else:
+    if opts["--verbose-sa"] is True:
+        satest.append("--debug")
+        satest.append("--progress")
+        sasave.append("--debug")
+        sasave.append("--progress")
+
+if opts["--verbose-sa"] is True:
+    spamc_learn_spam.append("-R")
+    spamc_learn_spam.append("-l")
+    spamc_learn_ham.append("-R")
+    spamc_learn_ham.append("-l")
 
 if opts["--spaminbox"] is not None:
     spaminbox = opts["--spaminbox"]
