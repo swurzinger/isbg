@@ -105,6 +105,9 @@ alreadylearnt = "Message was already un/learned"
 satest = ["spamassassin", "--exit-code"]
 # sasave is the one that dumps out a munged message including report
 sasave = ["spamassassin"]
+# SpamAssassin Client used with the --spam option
+spamc_learn_ham = ["spamc", "--learntype=ham"]
+spamc_learn_spam = ["spamc", "--learntype=spam"]
 # what we use to set flags on the original spam in imapbox
 spamflagscmd = "+FLAGS.SILENT"
 # and the flags we set them to (none by default)
@@ -462,8 +465,12 @@ if opts["--learnspambox"] is not None:
     uids = uids[0].split()
     for u in uids:
         body = getmessage(u)
-        p = Popen(["spamc", "--learntype=spam"],
-                  stdin=PIPE, stdout=PIPE, close_fds=True)
+        if opts["--verbose"] is True:
+            print("Starting spamc program : %s ..." % spamc_learn_spam)
+        try:
+            p = Popen(spamc_learn_spam, stdin=PIPE, stdout=PIPE, close_fds=True)
+        except Exception, e:
+            errorexit("Running external program %s failed - %s" % (spamc_learn_spam, str(e)))
         try:
             out = p.communicate(body)[0]
         except:
@@ -497,8 +504,12 @@ if opts["--learnhambox"] is not None:
     uids = uids[0].split()
     for u in uids:
         body = getmessage(u)
-        p = Popen(["spamc", "--learntype=ham"],
-                  stdin=PIPE, stdout=PIPE, close_fds=True)
+        if opts["--verbose"] is True:
+            print("Starting spamc program : %s ..." % spamc_learn_ham)
+        try:
+            p = Popen(spamc_learn_ham, stdin=PIPE, stdout=PIPE, close_fds=True)
+        except Exception, e:
+            errorexit("Running external program %s failed - %s" % (spamc_learn_ham, str(e)))
         try:
             out = p.communicate(body)[0]
         except:
@@ -566,7 +577,12 @@ for u in uids:
     body = getmessage(u, pastuids)
 
     # Feed it to SpamAssassin in test mode
-    p = Popen(satest, stdin=PIPE, stdout=PIPE, close_fds=True)
+    if opts["--verbose"] is True:
+        print("Starting spamassassin test program : %s ..." % satest)
+    try:
+        p = Popen(satest, stdin=PIPE, stdout=PIPE, close_fds=True)
+    except Exception, e:
+        errorexit("Running external program %s failed - %s" % (satest, str(e)))
     try:
         score = p.communicate(body)[0]
         if opts["--spamc"] is False:
@@ -598,7 +614,12 @@ for u in uids:
         # do we want to include the spam report
         if noreport is False:
             # filter it through sa
-            p = Popen(sasave, stdin=PIPE, stdout=PIPE, close_fds=True)
+            if opts["--verbose"] is True:
+                print("Starting spamassassin report save program : %s ..." % sasave)
+            try:
+                p = Popen(sasave, stdin=PIPE, stdout=PIPE, close_fds=True)
+            except Exception, e:
+                errorexit("Running external program %s failed - %s" % (sasave, str(e)))
             try:
                 body = p.communicate(body)[0]
             except:
