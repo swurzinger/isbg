@@ -88,6 +88,12 @@ you can add a [bash alias](https://wiki.archlinux.org/index.php/Bash#Aliases)
 to your ~/.bashrc file. Here `alias isbg="/path/to/isbg.py"` should do the
 trick.
 
+If the script does not start claiming absence of docopt Python module (not
+shipped in older OSes, nor in even new Solaris/illumos distributions), you
+can fetch [a version of docopt backported for Python 2.4+ compatibility](https://github.com/davidhalter-archive/xen_backup/blob/master/docopt.py)
+and place it in the same directory as your isbg workspace, or copy into the
+system Python module directory like "/usr/lib/python-2.x/".
+
 ## Install in Debian<a name="Install-in-Debian"></a>
 
 There is a package in mentor.debian.net pending approval from the community.
