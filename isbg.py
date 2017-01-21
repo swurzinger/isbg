@@ -490,8 +490,10 @@ def sa_learn_spam(opts, learnspambox, exitcodeimap, alreadylearnt,
                 errorexit("spamd is misconfigured (use --allow-tell)")
             p.stdin.close()
             if not out.strip() == alreadylearnt:
-                if code == 0: s_learnt += 1
-                else:         s_learnt_err += 1
+                if code == 0:
+                    s_learnt += 1
+                else:
+                    s_learnt_err += 1
             if opts["--verbose"] is True:
                 print(u, out)
             if opts["--learnthendestroy"] is True:
@@ -538,8 +540,10 @@ def sa_learn_ham(opts, learnhambox, exitcodeimap, alreadylearnt, movehamto,
                 errorexit("spamd is misconfigured (use --allow-tell)")
             p.stdin.close()
             if not out.strip() == alreadylearnt:
-                if code == 0: h_learnt += 1
-                else:         h_learnt_err += 1
+                if code == 0:
+                    h_learnt += 1
+                else:
+                    h_learnt_err += 1
             if opts["--verbose"] is True:
                 print(u, out)
             if opts["--movehamto"] is not None:
