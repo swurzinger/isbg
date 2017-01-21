@@ -569,9 +569,9 @@ if opts["--teachonly"] is False:
                 res = imap.create(spaminbox)
                 assertok(res, 'create', spaminbox, 1)
             else:
-                raise Exception("Missing spaminbox folder and not instruction to create it : %s" % spaminbox)
+                raise Exception("Missing spaminbox folder and not instructed to create it : %s" % spaminbox)
         except Exception, e:
-                errorexit("Can not access spaminbox folder : %s" % str(e))
+                errorexit("Cannot access spaminbox folder : %s" % str(e))
 
     # select inbox
     res = imap.select(imapinbox, readonly=True)
