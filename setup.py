@@ -17,7 +17,7 @@ setup(
 	license='See LICENCE file.',
 	scripts=['isbg.py'],
 	install_requires=['docopt'],
-	url='http://redmine.ookook.fr/projects/isbg/wiki',
+        url='https://github.com/isbg/isbg',
 	classifiers=[
 		'Development Status :: 5 - Production/Stable',
 		'Environment :: Console',
