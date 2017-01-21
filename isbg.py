@@ -300,7 +300,7 @@ if opts["--imapport"] is None:
         imapport = 993
 
 if pastuidsfile is None:
-    pastuidsfile = os.path.expanduser("~" + os.sep + ".isbg-track" + "%" + imapuser + "%" + imapproxyuser)
+    pastuidsfile = os.path.expanduser("~" + os.sep + ".isbg-track")
     m = md5()
     m.update(imaphost)
     m.update(imapuser)
@@ -309,7 +309,8 @@ if pastuidsfile is None:
     pastuidsfile = pastuidsfile + res
 
 if opts["--lockfilename"] is None:
-    lockfilename = os.path.expanduser("~" + os.sep + ".isbg-lock" + "%" + imapuser + "%" + imapproxyuser)
+    lockfilename = os.path.expanduser("~" + os.sep + ".isbg-lock")
+
 
 # Delete lock file
 def removelock():
