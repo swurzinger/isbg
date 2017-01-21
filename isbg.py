@@ -30,14 +30,8 @@ Options:
     --imaplist           List imap directories
     --imappasswd passwd  IMAP account password
     --imapport port      Use a custom port
+    --imapproxyuser mbox Use proxyauth on IMAP host
     --imapuser username  Who you login as
-    --imapproxyuser userbox     Use proxyauth on IMAP host. If set, allows
-                         the sysadmin or a secretary (identified by username
-                         and passwd above) to log into the IMAP server and
-                         administer the userbox account specified here.
-                         Otherwise the username accesses his or her own box.
-                         Required by Sun/iPlanet/Netscape IMAP servers to
-                         be able to use an administrative user.
     --imapinbox mbox     Name of your inbox folder
     --learnspambox mbox  Name of your learn spam folder
     --learnhambox mbox   Name of your learn ham folder
@@ -306,7 +300,7 @@ if opts["--imapport"] is None:
         imapport = 993
 
 if pastuidsfile is None:
-    pastuidsfile = os.path.expanduser("~" + os.sep + ".isbg-track" + "%" + imapuser + "%" + imapproxyuser)
+    pastuidsfile = os.path.expanduser("~" + os.sep + ".isbg-track")
     m = md5()
     m.update(imaphost)
     m.update(imapuser)
@@ -315,7 +309,8 @@ if pastuidsfile is None:
     pastuidsfile = pastuidsfile + res
 
 if opts["--lockfilename"] is None:
-    lockfilename = os.path.expanduser("~" + os.sep + ".isbg-lock" + "%" + imapuser + "%" + imapproxyuser)
+    lockfilename = os.path.expanduser("~" + os.sep + ".isbg-lock")
+
 
 # Delete lock file
 def removelock():
@@ -574,9 +569,9 @@ if opts["--teachonly"] is False:
                 res = imap.create(spaminbox)
                 assertok(res, 'create', spaminbox, 1)
             else:
-                raise Exception("Missing spaminbox folder and not instruction to create it : %s" % spaminbox)
+                raise Exception("Missing spaminbox folder and not instructed to create it : %s" % spaminbox)
         except Exception, e:
-                errorexit("Can not access spaminbox folder : %s" % str(e))
+                errorexit("Cannot access spaminbox folder : %s" % str(e))
 
     # select inbox
     res = imap.select(imapinbox, readonly=True)
