@@ -6,7 +6,7 @@ isbg scans an IMAP Inbox and runs every entry against SpamAssassin.
 For any entries that match, the message is copied to another folder,
 and the original marked or deleted.
 
-This software was mainly written Roger Binns <rogerb@rogerbinns.com>
+This software was mainly written by Roger Binns <rogerb@rogerbinns.com>
 and maintained by Thomas Lecavelier <thomas@lecavelier.name> since
 novembre 2009. You may use isbg under any OSI approved open source
 license such as those listed at http://opensource.org/licenses/alphabetical
@@ -31,6 +31,13 @@ Options:
     --imappasswd passwd  IMAP account password
     --imapport port      Use a custom port
     --imapuser username  Who you login as
+    --imapproxyuser userbox     Use proxyauth on IMAP host. If set, allows
+                         the sysadmin or a secretary (identified by username
+                         and passwd above) to log into the IMAP server and
+                         administer the userbox account specified here.
+                         Otherwise the username accesses his or her own box.
+                         Required by Sun/iPlanet/Netscape IMAP servers to
+                         be able to use an administrative user.
     --imapinbox mbox     Name of your inbox folder
     --learnspambox mbox  Name of your learn spam folder
     --learnhambox mbox   Name of your learn ham folder
@@ -49,22 +56,24 @@ Options:
     --savepw             Store the password to be used in future runs
     --spamc              Use spamc instead of standalone SpamAssassin binary
     --spaminbox mbox     Name of your spam folder
+    --createspaminbox    Enable creation of the spam folder if missing
     --nossl              Don't use SSL to connect to the IMAP server
     --teachonly          Don't search spam, just learn from folders
     --trackfile file     Override the trackfile name
     --verbose            Show IMAP stuff happening
+    --verbose-sa         Show SpamAssassin stuff happening
     --version            Show the version information
 
     (Your inbox will remain untouched unless you specify --flag or --delete)
 
 """
 
-import sys  # Because sys.stderr.write() is called bellow
+import sys  # Because sys.stderr.write() is called below
 
 try:
     from docopt import docopt  # Creating command-line interface
 except ImportError:
-    sys.stderr.write("Missing dependency: docopt")
+    sys.stderr.write("Missing dependency: docopt\n")
 
 from subprocess import Popen, PIPE
 
@@ -81,12 +90,14 @@ try:
 except ImportError:
     from md5 import md5
 
-
+imap = None
 imapuser = ''
+imapproxyuser = None
 imaphost = 'localhost'
 imappasswd = None
 imapinbox = "INBOX"
 spaminbox = "INBOX.spam"
+createspaminbox = False
 interactive = sys.stdin.isatty()
 maxsize = 120000  # messages larger than this aren't considered
 pastuidsfile = None
@@ -97,6 +108,9 @@ alreadylearnt = "Message was already un/learned"
 satest = ["spamassassin", "--exit-code"]
 # sasave is the one that dumps out a munged message including report
 sasave = ["spamassassin"]
+# SpamAssassin Client used with the --spam option
+spamc_learn_ham = ["spamc", "--learntype=ham"]
+spamc_learn_spam = ["spamc", "--learntype=spam"]
 # what we use to set flags on the original spam in imapbox
 spamflagscmd = "+FLAGS.SILENT"
 # and the flags we set them to (none by default)
@@ -130,6 +144,13 @@ partialrun = None
 
 
 def errorexit(msg, exitcode=exitcodeflags):
+    try:
+        global imap
+        if imap is not None:
+            imap.logout()
+            imap = None
+    except:
+        pass
     sys.stderr.write(msg)
     sys.stderr.write("\nUse --help to see valid options and arguments\n")
     sys.exit(exitcode)
@@ -202,6 +223,9 @@ if opts["--imapport"] is not None:
 if opts["--imapuser"] is not None:
     imapuser = opts["--imapuser"]
 
+if opts["--imapproxyuser"] is not None:
+    imapproxyuser = opts["--imapproxyuser"]
+
 if opts["--imapinbox"] is not None:
     imapinbox = opts["--imapinbox"]
 
@@ -235,9 +259,29 @@ if opts["--spamc"] is True:
     spamc = True
     satest = ["spamc", "-c"]
     sasave = ["spamc"]
+    if opts["--verbose-sa"] is True:
+        satest.append("-R")
+        satest.append("-l")
+        sasave.append("-R")
+        sasave.append("-l")
+else:
+    if opts["--verbose-sa"] is True:
+        satest.append("--debug")
+        satest.append("--progress")
+        sasave.append("--debug")
+        sasave.append("--progress")
+
+if opts["--verbose-sa"] is True:
+    spamc_learn_spam.append("-R")
+    spamc_learn_spam.append("-l")
+    spamc_learn_ham.append("-R")
+    spamc_learn_ham.append("-l")
 
 if opts["--spaminbox"] is not None:
     spaminbox = opts["--spaminbox"]
+
+if opts["--createspaminbox"] is True:
+    createspaminbox = True
 
 if opts["--lockfilename"] is not None:
     lockfilename = opts["--lockfilename"]
@@ -262,7 +306,7 @@ if opts["--imapport"] is None:
         imapport = 993
 
 if pastuidsfile is None:
-    pastuidsfile = os.path.expanduser("~" + os.sep + ".isbg-track")
+    pastuidsfile = os.path.expanduser("~" + os.sep + ".isbg-track" + "%" + imapuser + "%" + imapproxyuser)
     m = md5()
     m.update(imaphost)
     m.update(imapuser)
@@ -271,8 +315,7 @@ if pastuidsfile is None:
     pastuidsfile = pastuidsfile + res
 
 if opts["--lockfilename"] is None:
-    lockfilename = os.path.expanduser("~" + os.sep + ".isbg-lock")
-
+    lockfilename = os.path.expanduser("~" + os.sep + ".isbg-lock" + "%" + imapuser + "%" + imapproxyuser)
 
 # Delete lock file
 def removelock():
@@ -427,6 +470,12 @@ else:
 res = imap.login(imapuser, imappasswd)
 assertok(res, "login", imapuser, 'xxxxxxxx')
 
+if opts["--imapproxyuser"] is not None:
+    if opts["--verbose"] is True:
+        print("Logged in as %s, now setting proxyauth to administer mailbox of %s" % (imapuser, imapproxyuser))
+    res = imap.proxyauth(imapproxyuser)
+    assertok(res, "proxyauth", imapproxyuser, 'xxxxxxxx')
+
 # List imap directories
 if opts["--imaplist"] is True:
     imap_list = str(imap.list())
@@ -437,7 +486,7 @@ if opts["--imaplist"] is True:
 if opts["--learnspambox"] is not None:
     if opts["--verbose"] is True:
         print("Teach SPAM to SA from:", learnspambox)
-    res = imap.select(learnspambox, 0)
+    res = imap.select(learnspambox, readonly=False)
     assertok(res, 'select', learnspambox)
     s_tolearn = int(res[1][0])
     s_learnt = 0
@@ -445,8 +494,12 @@ if opts["--learnspambox"] is not None:
     uids = sorted(uids[0].split(), reverse=True)
     for u in uids:
         body = getmessage(u)
-        p = Popen(["spamc", "--learntype=spam"],
-                  stdin=PIPE, stdout=PIPE, close_fds=True)
+        if opts["--verbose"] is True:
+            print("Starting spamc program : %s ..." % spamc_learn_spam)
+        try:
+            p = Popen(spamc_learn_spam, stdin=PIPE, stdout=PIPE, close_fds=True)
+        except Exception, e:
+            errorexit("Running external program %s failed - %s" % (spamc_learn_spam, str(e)))
         try:
             out = p.communicate(body)[0]
         except:
@@ -472,7 +525,7 @@ if opts["--learnspambox"] is not None:
 if opts["--learnhambox"] is not None:
     if opts["--verbose"] is True:
         print("Teach HAM to SA from:", learnhambox)
-    res = imap.select(learnhambox, 0)
+    res = imap.select(learnhambox, readonly=False)
     assertok(res, 'select', learnhambox)
     h_tolearn = int(res[1][0])
     h_learnt = 0
@@ -480,8 +533,12 @@ if opts["--learnhambox"] is not None:
     uids = sorted(uids[0].split(), reverse=True)
     for u in uids:
         body = getmessage(u)
-        p = Popen(["spamc", "--learntype=ham"],
-                  stdin=PIPE, stdout=PIPE, close_fds=True)
+        if opts["--verbose"] is True:
+            print("Starting spamc program : %s ..." % spamc_learn_ham)
+        try:
+            p = Popen(spamc_learn_ham, stdin=PIPE, stdout=PIPE, close_fds=True)
+        except Exception, e:
+            errorexit("Running external program %s failed - %s" % (spamc_learn_ham, str(e)))
         try:
             out = p.communicate(body)[0]
         except:
@@ -506,11 +563,23 @@ uids = []
 
 if opts["--teachonly"] is False:
     # check spaminbox exists by examining it
-    res = imap.select(spaminbox, 1)
-    assertok(res, 'select', spaminbox, 1)
+    try:
+        res = imap.select(spaminbox, readonly=True)
+        if res[0] != "OK":
+            raise Exception("Missing spaminbox folder, see if we can create one...")
+    except:
+        try:
+            if createspaminbox is True:
+                print("Trying to create the missing spaminbox folder : %s ..." % spaminbox)
+                res = imap.create(spaminbox)
+                assertok(res, 'create', spaminbox, 1)
+            else:
+                raise Exception("Missing spaminbox folder and not instruction to create it : %s" % spaminbox)
+        except Exception, e:
+                errorexit("Can not access spaminbox folder : %s" % str(e))
 
     # select inbox
-    res = imap.select(imapinbox, 1)
+    res = imap.select(imapinbox, readonly=True)
     assertok(res, 'select', imapinbox, 1)
 
     # get the uids of all mails with a size less then the maxsize
@@ -549,7 +618,12 @@ for u in uids:
     body = getmessage(u, pastuids)
 
     # Feed it to SpamAssassin in test mode
-    p = Popen(satest, stdin=PIPE, stdout=PIPE, close_fds=True)
+    if opts["--verbose"] is True:
+        print("Starting spamassassin test program : %s ..." % satest)
+    try:
+        p = Popen(satest, stdin=PIPE, stdout=PIPE, close_fds=True)
+    except Exception, e:
+        errorexit("Running external program %s failed - %s" % (satest, str(e)))
     try:
         score = p.communicate(body)[0]
         if opts["--spamc"] is False:
@@ -581,7 +655,12 @@ for u in uids:
         # do we want to include the spam report
         if noreport is False:
             # filter it through sa
-            p = Popen(sasave, stdin=PIPE, stdout=PIPE, close_fds=True)
+            if opts["--verbose"] is True:
+                print("Starting spamassassin report save program : %s ..." % sasave)
+            try:
+                p = Popen(sasave, stdin=PIPE, stdout=PIPE, close_fds=True)
+            except Exception, e:
+                errorexit("Running external program %s failed - %s" % (sasave, str(e)))
             try:
                 body = p.communicate(body)[0]
             except:
@@ -653,7 +732,7 @@ if opts["--teachonly"] is False:
 
 # sign off
 imap.logout()
-del imap
+imap = None
 
 
 if opts["--nostats"] is False:
