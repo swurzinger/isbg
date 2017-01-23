@@ -178,8 +178,14 @@ Options:
     --imaplist           List imap directories
     --imappasswd passwd  IMAP account password
     --imapport port      Use a custom port
-    --imapproxyuser mbox Use proxyauth on IMAP host
     --imapuser username  Who you login as
+    --imapproxyuser enduser     Use proxyauth on IMAP host. If set, allows
+                         the sysadmin or a secretary (identified by username
+                         and passwd above) to log into the IMAP server and
+                         administer the enduser account specified here.
+                         Otherwise the username accesses his or her own box.
+                         Required by Sun/iPlanet/Netscape IMAP servers to
+                         be able to use an administrative user.
     --imapinbox mbox     Name of your inbox folder
     --learnspambox mbox  Name of your learn spam folder
     --learnhambox mbox   Name of your learn ham folder
