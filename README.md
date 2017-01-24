@@ -178,8 +178,10 @@ Options:
     --imaplist           List imap directories
     --imappasswd passwd  IMAP account password
     --imapport port      Use a custom port
-    --imapproxyuser mbox Use proxyauth on IMAP host
     --imapuser username  Who you login as
+    --imapproxyuser enduser     Use proxyauth on IMAP host, so the account
+                         identified by username and passwd above can log into
+                         the IMAP server and administer the enduser's data.
     --imapinbox mbox     Name of your inbox folder
     --learnspambox mbox  Name of your learn spam folder
     --learnhambox mbox   Name of your learn ham folder
@@ -313,6 +315,10 @@ $ ./isbg.py --imapuser mailadmin --imappasswd Adm1nPaSs \
 Here the `--imapuser` and `--imappasswd` still refer to the account you log in
 as (but this time it is the administrative account), and the `--imapproxyuser`
 refers to the end-user whose mailbox you administer.
+
+This option is for example required by Sun/iPlanet/Netscape IMAP servers to
+be able to use an administrative user for such mass inspection of mailboxes.
+Otherwise the account authenticated by username accesses his or her own box.
 
 # Saving your password<a name="Saving-your-password"></a>
 

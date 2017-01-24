@@ -30,8 +30,10 @@ Options:
     --imaplist           List imap directories
     --imappasswd passwd  IMAP account password
     --imapport port      Use a custom port
-    --imapproxyuser mbox Use proxyauth on IMAP host
     --imapuser username  Who you login as
+    --imapproxyuser enduser     Use proxyauth on IMAP host, so the account
+                         identified by username and passwd above can log into
+                         the IMAP server and administer the enduser's data.
     --imapinbox mbox     Name of your inbox folder
     --learnspambox mbox  Name of your learn spam folder
     --learnhambox mbox   Name of your learn ham folder
