@@ -424,7 +424,7 @@ class ISBG:
         self.pastuidsfile = self.opts.get('--trackfile', self.pastuidsfile)
 
         if self.opts.get("--partialrun") is not None:
-            self.partialrun = self.opts["--partialrun"]
+            self.partialrun = int(self.opts["--partialrun"])
             if self.partialrun < 1:
                 errorexit("Partial run number must be equal to 1 or higher", self.exitcodeflags)
 
@@ -489,8 +489,8 @@ class ISBG:
             pass
         self.logger.debug('Writing pastuids, {} origpastuids, newpastuids: {}'.format(len(origpastuids), newpastuids))
         struct = {
-                'uidvalidity': uidvalidity,
-                'uids': newpastuids + origpastuids
+            'uidvalidity': uidvalidity,
+            'uids': list(set(newpastuids + origpastuids))
         }
         json.dump(struct, f)
         f.close()
@@ -509,18 +509,20 @@ class ISBG:
         uidvalidity = self.get_uidvalidity(self.imapinbox)
 
         # get the uids of all mails with a size less then the maxsize
-        typ, inboxuids = self.imap.uid("SEARCH", None, "SMALLER", self.maxsize)
+        typ, inboxuids = self.imap.uid("SEARCH", None, "SMALLER", str(self.maxsize))
         inboxuids = inboxuids[0].split()
+        if sys.version_info.major >= 3:
+            inboxuids = [x.decode() for x in inboxuids]
 
         # remember what pastuids looked like so that we can compare at the end
         origpastuids = self.pastuid_read(uidvalidity)
         newpastuids = []
 
         # filter away uids that was previously scanned
-        uids = [u for u in inboxuids if int(u) not in origpastuids]
+        uids = [u for u in inboxuids if u not in origpastuids]
 
         # Take only X elements if partialrun is enabled
-        if self.partialrun is not None:
+        if self.partialrun:
             uids = uids[:int(self.partialrun)]
 
         self.logger.debug('Got {} mails to check'.format(len(uids)))
@@ -562,6 +564,8 @@ class ISBG:
                 p = Popen(self.satest, stdin=PIPE, stdout=PIPE, close_fds=True)
                 try:
                     score = p.communicate(body)[0]
+                    if sys.version_info.major >= 3:
+                        score = score.decode()
                     if not self.spamc:
                         m = re.search("score=(-?\d+(?:\.\d+)?) required=(\d+(?:\.\d+)?)",
                                       score)
@@ -571,9 +575,9 @@ class ISBG:
                     self.logger.exception('Error communicating with {}!'.format(self.satest))
                     continue
             if score == "0/0\n":
-                errorexit("spamc -> spamd error - aborting", exitcodespamc)
+                errorexit("spamc -> spamd error - aborting", self.exitcodespamc)
 
-            self.logger.debug(u, "score:", score)
+            self.logger.debug("[{}] score: {}".format(u, score))
 
             if code == 0:
                 # Message is below threshold
@@ -585,7 +589,7 @@ class ISBG:
                 self.logger.debug("{} is spam".format(u))
 
                 if (self.deletehigherthan is not None and
-                    float(score.split('/')[0]) > self.deletehigherthan):
+                            float(score.split('/')[0]) > self.deletehigherthan):
                     spamdeletelist.append(u)
                     continue
 
@@ -727,10 +731,10 @@ class ISBG:
                                 res = self.imap.uid("STORE", u, self.spamflagscmd, "(\\Deleted)")
                                 self.assertok(res, "uid store", u, self.spamflagscmd, "(\\Deleted)")
                         elif learntype['moveto'] is not None:
-                            res = imap.uid("COPY", u, learntype['moveto'])
+                            res = self.imap.uid("COPY", u, learntype['moveto'])
                             self.assertok(res, "uid copy", u, learntype['moveto'])
                         elif self.learnthenflag:
-                            res = imap.uid("STORE", u, self.spamflagscmd, "(\\Flagged)")
+                            res = self.imap.uid("STORE", u, self.spamflagscmd, "(\\Flagged)")
                             self.assertok(res, "uid store", u, self.spamflagscmd, "(\\Flagged)")
                 self.pastuid_write(uidvalidity, origpastuids, newpastuids, folder=learntype['learntype'])
             result.append((n_tolearn, n_learnt))
@@ -761,7 +765,7 @@ class ISBG:
             m.update(self.imapuser.encode())
             m.update(repr(self.imapport).encode())
             self.passwdfilename = os.path.expanduser("~" + os.sep +
-                                                ".isbg-" + m.hexdigest())
+                                                     ".isbg-" + m.hexdigest())
 
         if self.passwordhash is None:
             # We make hash that the password is xor'ed against
@@ -787,7 +791,7 @@ class ISBG:
             self.logger.debug("Lock file is ignored. Continue.")
         else:
             if os.path.exists(self.lockfilename) and (os.path.getmtime(self.lockfilename) +
-                                                 (self.lockfilegrace * 60) > time.time()):
+                                                          (self.lockfilegrace * 60) > time.time()):
                 self.logger.debug("""\nLock file is present. Guessing isbg
                       is already running. Exit.""")
                 errorexit(self.exitcodelocked)
