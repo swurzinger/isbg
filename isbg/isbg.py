@@ -183,7 +183,7 @@ class ISBG:
         )
         self.set_mailboxes(
             inbox="INBOX",
-            spaminbox="INBOX.spam",
+            spaminbox="Junk",
             learnspambox=None,
             learnhambox=None
         )
@@ -585,7 +585,7 @@ class ISBG:
             if code == 0:
                 # Message is below threshold
                 # but it was already appended by getmessage...???
-                # self.pastuids.append(u)
+                newpastuids.append(u)
                 pass
             else:
                 # Message is spam, delete it or move it to spaminbox (optionally with report)
@@ -629,8 +629,6 @@ class ISBG:
 
                 spamlist.append(u)
 
-        self.pastuid_write(uidvalidity, origpastuids, newpastuids)
-
         nummsg = len(uids)
         spamdeleted = len(spamdeletelist)
         numspam = len(spamlist) + spamdeleted
@@ -643,11 +641,10 @@ class ISBG:
                 res = self.imap.select(self.imapinbox)
                 self.assertok(res, 'select', self.imapinbox)
                 # Only set message flags if there are any
-                if len(spamflags) > 2:
+                if len(self.spamflags) > 0:
                     for u in spamlist:
                         res = self.imap.uid("STORE", u, self.spamflagscmd, imapflags(self.spamflags))
-                        self.assertok(res, "uid store", u, self.spamflagscmd, imapflags(spamflags))
-                        newpastuids.append(u)
+                        self.assertok(res, "uid store", u, self.spamflagscmd, imapflags(self.spamflags))
                 # If its gmail, and --delete was passed, we actually copy!
                 if self.delete and self.gmail:
                     for u in spamlist:
@@ -663,6 +660,10 @@ class ISBG:
                         self.assertok(res, "uid store", u, self.spamflagscmd, "(\\Deleted)")
                 if self.expunge:
                     self.imap.expunge()
+                for u in spamlist:
+                    newpastuids.append(u)
+
+        self.pastuid_write(uidvalidity, origpastuids, newpastuids)
 
         return (numspam, nummsg, spamdeleted)
 
