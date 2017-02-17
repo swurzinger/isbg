@@ -561,7 +561,10 @@ class ISBG:
                     code = 0
                 processednum = processednum + 1
             else:
-                p = Popen(self.satest, stdin=PIPE, stdout=PIPE, close_fds=True)
+                if os.name == 'nt':
+                    p = Popen(self.satest, stdin=PIPE, stdout=PIPE)
+                else:
+                    p = Popen(self.satest, stdin=PIPE, stdout=PIPE, close_fds=True)
                 try:
                     score = p.communicate(body)[0]
                     if sys.version_info.major >= 3:
@@ -599,7 +602,10 @@ class ISBG:
                         self.logger.info("Skipping report because of --dryrun")
                     else:
                         # filter it through sa
-                        p = Popen(self.sasave, stdin=PIPE, stdout=PIPE, close_fds=True)
+                        if os.name == 'nt':
+                            p = Popen(self.sasave, stdin=PIPE, stdout=PIPE)
+                        else:
+                            p = Popen(self.sasave, stdin=PIPE, stdout=PIPE, close_fds=True)
                         try:
                             body = p.communicate(body)[0]
                         except:
@@ -706,8 +712,10 @@ class ISBG:
                         out = self.alreadylearnt
                         code = 0
                     else:
-                        p = Popen(["spamc", "--learntype=" + learntype['learntype']],
-                                  stdin=PIPE, stdout=PIPE, close_fds=True)
+                        if os.name == 'nt':
+                            p = Popen(["spamc", "--learntype=" + learntype['learntype']], stdin=PIPE, stdout=PIPE)
+                        else:
+                            p = Popen(["spamc", "--learntype=" + learntype['learntype']], stdin=PIPE, stdout=PIPE, close_fds=True)
                         try:
                             out = p.communicate(body)[0]
                         except:
